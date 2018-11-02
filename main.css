@@ -1,0 +1,15 @@
+input, .post {
+  display: block;
+  margin: 10px auto;
+  width: 400px;
+  padding: 10px;
+  border: 2px solid #eeeeee;
+}
+
+input {
+  border-radius: 20px;
+}
+
+.post {
+  border-radius: 10px;
+}
