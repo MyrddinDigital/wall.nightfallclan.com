@@ -1,0 +1,18 @@
+{
+  "name": "rbx-wall-archive",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jon Love",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "express": "^4.16.4",
+    "mongodb": "^3.1.8",
+    "vue": "^2.5.17"
+  }
+}
