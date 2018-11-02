@@ -2,7 +2,6 @@ const axios = require('axios');
 const MongoClient = require('mongodb').MongoClient;
 
 const dbUrl = 'mongodb://localhost:27017';
-const client = new MongoClient(dbUrl);
 const dbName = 'rbx-wall-archive--dev';
 
 const auth = axios.create({});
@@ -33,33 +32,43 @@ function getCookie() {
   });
 }
 
-function getWallPosts(nextPageCursor) {
+async function getWallPosts(nextPageCursor) {
   const limit = 100;
   const baseUrl = `https://groups.roblox.com/v2/groups/${gid}/wall/posts?sortOrder=Desc&limit=${limit}`;
   const url = nextPageCursor ? `${baseUrl}&cursor=${nextPageCursor}` : baseUrl;
-  auth.get(url).then(posts => {
-    client.connect(err => {
-      if (err) throw new Error(err);
-      console.log("Connected successfully to DB server");
-      const db = client.db(dbName);
-      const groupCollection = db.collection(`g${gid.toString()}`);
-      
-      groupCollection.insertMany(posts.data.data, (err, result) => {
+  const client = new MongoClient(dbUrl);
+
+  const cursor = await new Promise((resolve, reject) => {
+
+    auth.get(url).then(posts => {
+      client.connect(err => {
         if (err) throw new Error(err);
-        console.log(`Inserted ${result.ops.length} documents into the collection`);
-        console.log(posts.data.data[0].created);
-        const cursor = posts.data.nextPageCursor;
-        if (cursor) {
-          getWallPosts(cursor);
-        } else {
-          console.log('----------\nDone!');
-          client.close();
-        }
+
+        console.log("Connected successfully to DB server");
+        const db = client.db(dbName);
+        const groupCollection = db.collection(`g${gid.toString()}`);
+
+        groupCollection.insertMany(posts.data.data, (err, result) => {
+          if (err) throw new Error(err);
+
+          console.log(`Inserted ${result.ops.length} documents into the collection`);
+          console.log(posts.data.data[0].created);
+          const cursor = posts.data.nextPageCursor;
+
+          if (cursor) {
+            resolve(cursor);
+          } else {
+            console.log('----------\nDone!');
+            client.close();
+          }
+
+        });
       });
     });
-  }).catch(err => {
-    console.log(err, 'err');
   });
+
+  client.close();
+  getWallPosts(cursor);
 }
 
 (async function main() {

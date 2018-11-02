@@ -17,7 +17,7 @@ app
       console.log('Connected to MongoDB successfully.')
       const wall = client.db('rbx-wall-archive--dev').collection(`g${gid}`)
   
-      wall.find({}, { projection: { _id: false, 'poster.user.username': true, created: true, body: true }, skip: (page - 1)*100, limit: 10 }).toArray((err, result) => {
+      wall.find({}, { skip: (page - 1)*100, limit: 10 }).toArray((err, result) => {
         if (err) throw new Error(err)
         res.json(result)
         client.close()
