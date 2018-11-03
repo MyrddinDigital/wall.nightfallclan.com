@@ -1,11 +1,12 @@
 let state = {
   posts: [],
+  numResults: null,
   userQuery: null,
   bodyQuery: null
 }
 
 function sanitizePostsResponse(response) {
-  response.data.forEach(post => {
+  response.data.posts.forEach(post => {
     if (!post.poster) {
       post.poster = {
         user: {
@@ -72,7 +73,8 @@ var app = new Vue({
     axios.get('https://rbx-wall-api.herokuapp.com/85654/1')
       .then(response => {
         sanitizePostsResponse(response)
-        this.posts = response.data
+        this.posts = response.data.posts
+        this.numResults = response.data.count
       })
       .catch(err => {
         throw new Error(err)
