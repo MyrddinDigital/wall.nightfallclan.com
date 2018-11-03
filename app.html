@@ -82,7 +82,7 @@
       <div id="resultsInfoContainer">
         <h3 v-if="numResults > 0">showing {{ posts.length }} results of {{ numResults }}</h3>
         <h3 v-if="posts.length == 0">No results</h3>
-        <button v-if="numResults > 0" @click="changeSortOrder">Sort: {{ sortOrder }}</button>
+        <button v-if="numResults > 0" @click="changeSortOrder">Sort: {{ sortOrder == -1 ? 'Decending' : 'Ascending' }}</button>
       </div>
     <div v-for="post in posts" class="post">
       <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
