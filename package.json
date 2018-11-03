@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "deploy": "git add . && git commit -am'save' && git push",
-    "postdeploy": "Echo 'Deployed.'"
+    "predeploy": "html-minifier --collapse-whitespace --remove-comments --remove-optional-tags --remove-redundant-attributes --remove-script-type-attributes --remove-tag-whitespace --use-short-doctype --minify-css true --minify-js true -o index.html app.html",
+    "deploy": "git add . && git commit -am'save' && git push"
   },
   "repository": {
     "type": "git",
@@ -17,5 +17,6 @@
   "bugs": {
     "url": "https://github.com/jayvolr/rbx-wall-archive/issues"
   },
-  "homepage": "https://github.com/jayvolr/rbx-wall-archive#readme"
+  "homepage": "https://github.com/jayvolr/rbx-wall-archive#readme",
+  "dependencies": {}
 }
