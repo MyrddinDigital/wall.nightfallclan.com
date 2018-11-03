@@ -1,10 +1,11 @@
-let state = {
+const state = {
   posts: [],
   sortOrder: -1,
-  numResults: null,
+  numResults: 0,
   userQuery: '',
   bodyQuery: '',
-  isLoading: true
+  isLoading: true,
+  page: 1
 }
 
 function sanitizePostsResponse(response) {
@@ -29,30 +30,39 @@ var app = new Vue({
   mounted () {
     this.getResults()
   },
+  computed: {
+    numPages: () => {
+      return Math.ceil(state.numResults/10)
+    }
+  },
   methods: {
     getResults: () => {
-      let apiUrl
-      if (this.app) {
-        apiUrl = `https://rbx-wall-api.herokuapp.com/85654/1?user=${this.app.userQuery}&body=${this.app.bodyQuery}&sortOrder=${this.app.sortOrder}`
-        this.app.isLoading = true
-      } else {
-        apiUrl = `https://rbx-wall-api.herokuapp.com/85654/1`
-      }
-      
+      const apiUrl = `https://rbx-wall-api.herokuapp.com/85654/${state.page}?user=${state.userQuery}&body=${state.bodyQuery}&sortOrder=${state.sortOrder}`
+      state.isLoading = true
 
       axios.get(apiUrl)
       .then(response => {
         sanitizePostsResponse(response)
-        this.app.posts = response.data.posts
-        this.app.numResults = response.data.count
-        this.app.isLoading = false
+        state.posts = response.data.posts
+        state.numResults = response.data.count
+        state.isLoading = false
         })
         .catch(err => {
           throw new Error(err)
         })
     },
     changeSortOrder: () => {
-      this.app.sortOrder = this.app.sortOrder*-1
+      state.sortOrder = state.sortOrder*-1
+      this.app.getResults()
+    },
+    prevPage: () => {
+      if (!state.page > 1) return
+      state.page--
+      this.app.getResults()
+    },
+    nextPage: () => {
+      if (!state.page < state.numPages) return
+      state.page++
       this.app.getResults()
     }
   }

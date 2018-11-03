@@ -3,10 +3,13 @@ html {
   overflow-y: overlay;
 }
 
+* {
+  transition: all 200ms;
+}
+
 html input:focus, html button:focus {
   outline: none;
   box-shadow: #7dcdea52 0 0 0px 4px;
-  transition: all 200ms;
 }
 
 a, a:hover {
@@ -82,4 +85,9 @@ button {
 button:hover {
   color: #00aef4;
   background: white;
+}
+
+#pageNavigation {
+  text-align: center;
+  margin: 20px;
 }

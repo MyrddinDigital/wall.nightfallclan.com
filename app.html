@@ -13,15 +13,15 @@
       <h1 id="header">
         <a href="/">ROBLOX Wall Archive</a>
       </h1>
-      <input type="text" v-model="userQuery" @keyup.enter="getResults" placeholder="Search for a user"/>
-      <input type="text" v-model="bodyQuery" @keyup.enter="getResults" placeholder="Search for a specific post"/>
+      <input type="text" v-model="userQuery" @keyup.enter="{{ page = 1; getResults() }}" placeholder="Search for a user"/>
+      <input type="text" v-model="bodyQuery" @keyup.enter="{{ page = 1; getResults() }}" placeholder="Search for a specific post"/>
       <div id="resultsInfoContainer">
         <h3 v-if="isLoading">Loading...</h3>
         <h3 v-if="numResults > 0 && !isLoading">showing {{ posts.length }} results of {{ numResults }}</h3>
         <h3 v-if="posts.length == 0 && !isLoading">No results</h3>
-        <button v-if="numResults > 0 && !isLoading" @click="changeSortOrder">Sort: {{ sortOrder == -1 ? 'Decending' : 'Ascending' }}</button>
+        <button v-if="numResults > 0 && !isLoading" @click="{{ page = 1; changeSortOrder() }}">Sort: {{ sortOrder == -1 ? 'Decending' : 'Ascending' }}</button>
       </div>
-      <div v-if="!isLoading" v-for="post in posts" class="post">
+      <div v-for="post in posts" class="post">
         <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
           <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
         </a>
@@ -32,6 +32,11 @@
           <br><br>
           <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
         </p>
+      </div>
+      <div id="pageNavigation">
+        <h5>Page {{ page }} of {{ numPages }}</h5>
+        <button @click="prevPage" v-if="page > 1">Prev Page</button>
+        <button @click="nextPage" v-if="numPages > page">Next Page</button>
       </div>
   </div>
   <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" async defer /> -->
