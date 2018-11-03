@@ -13,9 +13,14 @@
       <user-search></user-search>
       <body-search></body-search>
     <div v-for="post in posts" class="post">
-      <b style="color: #00aef4">{{ post.poster.user.username }}</b><br><br>
-      {{ post.body }}<br><br>
-      <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
+      <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
+        <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
+      </a>
+      <p class="postContainer">
+        <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">{{ post.poster.user.username }}</a><br><br>
+        {{ post.body }}<br><br>
+        <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
+      </p>
     </div>
     <h3 v-if="posts.length == 0">No results</h3>
   </div>

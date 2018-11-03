@@ -6,10 +6,16 @@ html input:focus {
   outline: none;
 }
 
+a, a:hover {
+  text-decoration: none;
+  color: #00aef4;
+  font-weight: bold;
+}
+
 h3, input, .post {
   display: block;
   margin: 10px auto;
-  width: 400px;
+  width: 500px;
   padding: 10px;
   border: 2px solid #eeeeee;
 }
@@ -35,4 +41,17 @@ input {
 
 .date {
   font-size: 0.7em;
+}
+
+.avatar {
+  width: 75px;
+  height: 75px;
+  margin: 5px 20px 5px 5px;
+  float: left;
+  border: 1px solid #dddddd;
+  border-radius: 100%;
+}
+
+.postContainer {
+  display: table;
 }
