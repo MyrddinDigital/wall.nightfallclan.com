@@ -20,8 +20,10 @@
         <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
       </a>
       <p class="postContainer">
-        <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">{{ post.poster.user.username }}</a><br><br>
-        {{ post.body }}<br><br>
+        <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">{{ post.poster.user.username }}</a>
+        <br><br>
+        <span v-html="post.body"></span>
+        <br><br>
         <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
       </p>
     </div>
@@ -29,6 +31,8 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="linkify.min.js"></script>
+  <script src="linkify-string.min.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

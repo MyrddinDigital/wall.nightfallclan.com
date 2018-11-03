@@ -13,6 +13,7 @@ function sanitizePostsResponse(response) {
         }
       }
     }
+    post.body = post.body.linkify()
   })
 }
 
