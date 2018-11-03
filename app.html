@@ -6,96 +6,33 @@
   <title>ROBLOX Wall Archive</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="shortcut icon" href="/favicon.ico"/>
-  <style>
-    html {
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    html input:focus {
-      outline: none;
-    }
-
-    a, a:hover {
-      text-decoration: none;
-      color: #00aef4;
-      font-weight: bold;
-    }
-
-    h3, input, .post {
-      display: block;
-      margin: 10px auto;
-      width: 500px;
-      padding: 10px;
-      border: 2px solid #eeeeee;
-    }
-
-    h3 {
-      text-align: center;
-      color: gray;
-      border: none;
-      display: inline;
-    }
-
-    input {
-      border-radius: 20px;
-      border-color: #7ecae9;
-    }
-
-    #header {
-      text-align: center;
-    }
-
-    .post {
-      border-radius: 10px;
-    }
-
-    .date {
-      font-size: 0.7em;
-    }
-
-    .avatar {
-      width: 75px;
-      height: 75px;
-      margin: 5px 20px 5px 5px;
-      float: left;
-      border: 1px solid #dddddd;
-      border-radius: 100%;
-    }
-
-    #resultsInfoContainer {
-      text-align: center;
-      margin: 10px;
-    }
-
-    .postContainer {
-      display: table;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="vue-entry">
       <h1 id="header">
         <a href="/">ROBLOX Wall Archive</a>
       </h1>
-      <input type="text" v-model="userQuery" @keyup="getResults" placeholder="Search for a user"/>
-      <input type="text" v-model="bodyQuery" @keyup="getResults" placeholder="Search for a specific post"/>
+      <input type="text" v-model="userQuery" @keyup.enter="getResults" placeholder="Search for a user"/>
+      <input type="text" v-model="bodyQuery" @keyup.enter="getResults" placeholder="Search for a specific post"/>
       <div id="resultsInfoContainer">
-        <h3 v-if="numResults > 0">showing {{ posts.length }} results of {{ numResults }}</h3>
-        <h3 v-if="posts.length == 0">No results</h3>
-        <button v-if="numResults > 0" @click="changeSortOrder">Sort: {{ sortOrder == -1 ? 'Decending' : 'Ascending' }}</button>
+        <h3 v-if="isLoading">Loading...</h3>
+        <h3 v-if="numResults > 0 && !isLoading">showing {{ posts.length }} results of {{ numResults }}</h3>
+        <h3 v-if="posts.length == 0 && !isLoading">No results</h3>
+        <button v-if="numResults > 0 && !isLoading" @click="changeSortOrder">Sort: {{ sortOrder == -1 ? 'Decending' : 'Ascending' }}</button>
       </div>
-    <div v-for="post in posts" class="post">
-      <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId || 1}/profile`">
-        <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId || 1}&width=420&height=420&format=png`">
-      </a>
-      <p class="postContainer">
-        <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">{{ post.poster.user.username }}</a>
-        <br><br>
-        <span v-html="post.body"></span>
-        <br><br>
-        <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
-      </p>
-    </div>
+      <div v-if="!isLoading" v-for="post in posts" class="post">
+        <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
+          <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
+        </a>
+        <p class="postContainer">
+          <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">{{ post.poster.user.username }}</a>
+          <br><br>
+          <span v-html="post.body"></span>
+          <br><br>
+          <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
+        </p>
+      </div>
   </div>
   <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" async defer /> -->
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>

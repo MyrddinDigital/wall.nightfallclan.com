@@ -1,9 +1,12 @@
 html {
   font-family: Arial, Helvetica, sans-serif;
+  overflow-y: overlay;
 }
 
-html input:focus {
+html input:focus, html button:focus {
   outline: none;
+  box-shadow: #7dcdea52 0 0 0px 4px;
+  transition: all 200ms;
 }
 
 a, a:hover {
@@ -24,6 +27,7 @@ h3 {
   text-align: center;
   color: gray;
   border: none;
+  display: inline;
 }
 
 input {
@@ -52,6 +56,30 @@ input {
   border-radius: 100%;
 }
 
+#resultsInfoContainer {
+  text-align: center;
+  margin: 10px;
+}
+
 .postContainer {
   display: table;
+}
+
+button {
+  cursor: pointer;
+  position: relative;
+  top: -3px;
+  font-weight: bold;
+  color: white;
+  border: 2px solid #00aef4;
+  border-radius: 5px;
+  width: 150px;
+  height: 30px;
+  line-height: 15px;
+  background: #00aef4;
+}
+
+button:hover {
+  color: #00aef4;
+  background: white;
 }
