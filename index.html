@@ -5,7 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>ROBLOX Wall Archive</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+  <link rel="stylesheet" type="text/css" media="screen" href="main.css" defer />
   <link rel="shortcut icon" href="/favicon.ico"/>
 </head>
 <body>
@@ -16,6 +16,7 @@
       <user-search></user-search>
       <body-search></body-search>
       <h3 v-if="numResults > 0">showing 50 results of {{ numResults }}</h3>
+      <h3 v-if="posts.length == 0">No results</h3>
     <div v-for="post in posts" class="post">
       <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
         <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
@@ -28,9 +29,8 @@
         <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
       </p>
     </div>
-    <h3 v-if="posts.length == 0">No results</h3>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="linkify.min.js"></script>
   <script src="linkify-string.min.js"></script>
