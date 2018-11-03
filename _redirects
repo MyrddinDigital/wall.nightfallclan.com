@@ -1,2 +1,2 @@
 # Redirect default Netlify subdomain to primary domain
-http://kind-bassi-2d0648.netlify.com/* http://wall.rbxarchive.com/:splat 301!
+https://rbx-wall-archive.netlify.com/* https://wall.rbxarchive.com/:splat 301!
