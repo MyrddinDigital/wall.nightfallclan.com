@@ -1,6 +1,6 @@
 let state = {
   posts: [],
-  sortOrder: 1,
+  sortOrder: -1,
   numResults: null,
   userQuery: '',
   bodyQuery: ''
