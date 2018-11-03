@@ -1,0 +1,21 @@
+{
+  "name": "rbx-wall-archive",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "git add . && git commit -am'save' && git push",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jayvolr/rbx-wall-archive.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jayvolr/rbx-wall-archive/issues"
+  },
+  "homepage": "https://github.com/jayvolr/rbx-wall-archive#readme"
+}
