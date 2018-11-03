@@ -1,4 +1,12 @@
-input, .post {
+html {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+html input:focus {
+  outline: none;
+}
+
+h3, input, .post {
   display: block;
   margin: 10px auto;
   width: 400px;
@@ -6,10 +14,25 @@ input, .post {
   border: 2px solid #eeeeee;
 }
 
+h3 {
+  text-align: center;
+  color: gray;
+  border: none;
+}
+
 input {
   border-radius: 20px;
+  border-color: #7ecae9;
+}
+
+#header {
+  text-align: center;
 }
 
 .post {
   border-radius: 10px;
+}
+
+.date {
+  font-size: 0.7em;
 }

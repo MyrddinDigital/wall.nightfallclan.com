@@ -9,12 +9,15 @@
 </head>
 <body>
   <div id="vue-entry">
-    <search-bar></search-bar>
+      <h1 id="header">ROBLOX Wall Archive</h1>
+      <user-search></user-search>
+      <body-search></body-search>
     <div v-for="post in posts" class="post">
-      <b>{{ post.poster.user.username }}</b><br>
-      {{ post.body }}<br>
-      {{ new Date(post.created).toLocaleString() }}
+      <b style="color: #00aef4">{{ post.poster.user.username }}</b><br><br>
+      {{ post.body }}<br><br>
+      <span class="date">{{ new Date(post.created).toLocaleString() }}</span>
     </div>
+    <h3 v-if="posts.length == 0">No results</h3>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
