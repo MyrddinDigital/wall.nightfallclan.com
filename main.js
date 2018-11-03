@@ -31,7 +31,8 @@ Vue.component('user-search', {
       axios.get(apiUrl)
         .then(response => {
           sanitizePostsResponse(response)
-          this.app.posts = response.data
+          this.app.posts = response.data.posts
+          this.app.numResults = response.data.count
         })
         .catch(err => {
           throw new Error(err)
@@ -54,7 +55,8 @@ Vue.component('body-search', {
       axios.get(apiUrl)
         .then(response => {
           sanitizePostsResponse(response)
-          this.app.posts = response.data
+          this.app.posts = response.data.posts
+          this.app.numResults = response.data.count
         })
         .catch(err => {
           throw new Error(err)

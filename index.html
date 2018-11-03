@@ -15,7 +15,7 @@
       </h1>
       <user-search></user-search>
       <body-search></body-search>
-      <h3>showing 50 results of {{ numResults }}</h3>
+      <h3 v-if="numResults > 0">showing 50 results of {{ numResults }}</h3>
     <div v-for="post in posts" class="post">
       <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
         <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
