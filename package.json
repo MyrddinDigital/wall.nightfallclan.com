@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "predeploy": "html-minifier --collapse-whitespace --remove-comments --remove-optional-tags --remove-redundant-attributes --remove-script-type-attributes --remove-tag-whitespace --use-short-doctype --minify-css true --minify-js true -o index.html app.html",
     "deploy": "git add . && git commit -am'save' && git push"
   },
   "repository": {
@@ -28,6 +27,7 @@
   "devDependencies": {
     "@vue/component-compiler-utils": "^2.3.0",
     "cssnano": "^4.1.7",
+    "parcel": "^1.10.3",
     "vue-template-compiler": "^2.5.17"
   }
 }
