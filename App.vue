@@ -1,7 +1,7 @@
 <template>
 <div>
   <h1 id="header">
-  <a href="/">ROBLOX Wall Archive</a>
+  <a @click="reset">ROBLOX Wall Archive</a>
   </h1>
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
@@ -10,7 +10,7 @@
     <h3 v-if="numResults == 0 && !isLoading">No results</h3>
     <button v-if="numResults > 0 && !isLoading" @click="page = 1; changeSortOrder()">Sort: {{ sortOrder == -1 ? 'New to old' : 'Old to new' }}</button>
   </div>
-  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" class="post" @click="getContext(post.id)">
+  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" class="post" @click.self="getContext(post.id)">
     <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
       <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
     </a>
@@ -45,7 +45,8 @@
     userQuery: '',
     bodyQuery: '',
     isLoading: true,
-    page: 1
+    page: 1,
+    spotlightMsg: null
   }
 
   function sanitizePostsResponse(response) {
@@ -75,6 +76,17 @@
     computed: {
       numPages () {
         return Math.ceil((state.numResults/10))
+      }
+    },
+    updated () {
+      if (state.spotlightMsg) {
+        const msg = document.getElementById(state.spotlightMsg)
+        msg.scrollIntoView({behavior: 'smooth', block: 'center'})
+        msg.classList.add('flash')
+        
+        setTimeout(() => {
+          state.spotlightMsg = null
+        }, 500)
       }
     },
     asyncComputed: {
@@ -111,7 +123,9 @@
         state.sortOrder = state.sortOrder*-1
       },
       searchUser (user) {
+        state.page = 1
         state.userQuery = user
+        document.body.scrollTop = document.documentElement.scrollTop = 0
       },
       prevPage () {
         if (!state.page > 1) return
@@ -126,15 +140,23 @@
         const apiUrl = `${apiOrigin}/85654?getContext=${id}&sortOrder=${state.sortOrder}`
 
         axios.get(apiUrl)
-        .then(response => {
+          .then(response => {
             state.page = response.data.page
             state.sortOrder = -1
             state.userQuery = ''
             state.bodyQuery = ''
+            state.spotlightMsg = id
           })
           .catch(err => {
             throw new Error(err)
           })
+      },
+      reset () {
+        state.page = 1
+        state.sortOrder = -1
+        state.userQuery = ''
+        state.bodyQuery = ''
+        state.spotlightMsg = null
       }
     }
   }
@@ -153,6 +175,10 @@ html {
 html input:focus, html button:focus {
   outline: none;
   box-shadow: #7dcdea52 0 0 0px 4px;
+}
+
+a {
+  cursor: pointer;
 }
 
 a, a:hover {
@@ -185,7 +211,7 @@ input {
   text-align: center;
 }
 
-.post {
+.post, .flashPost {
   border-radius: 10px;
   cursor: pointer;
 }
@@ -234,6 +260,22 @@ button:hover {
 #pageNavigation {
   text-align: center;
   margin: 20px;
+}
+
+@keyframes flash {
+  0% {
+    border-color: #eeeeee;
+  }
+  50% {
+    border-color: #ffe600;
+  }
+  100% {
+    border-color: #eeeeee;
+  }
+}
+
+.flash {
+  animation: 0.75s ease-in-out 0s 2 flash;
 }
 </style>
 
