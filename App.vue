@@ -17,9 +17,9 @@
     <p class="postContainer">
       <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
       <br><br>
-      <span v-html="post.body"></span>
+      <span @click.self="getContext(post.id)" v-html="post.body"></span>
       <br><br>
-      <span class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
+      <span @click.self="getContext(post.id)" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
     </p>
   </div>
   <div v-if="isLoading" style="margin-top: 60px"></div>
@@ -83,7 +83,7 @@
         const msg = document.getElementById(state.spotlightMsg)
         msg.scrollIntoView({behavior: 'smooth', block: 'center'})
         msg.classList.add('flash')
-        
+
         setTimeout(() => {
           state.spotlightMsg = null
         }, 500)
