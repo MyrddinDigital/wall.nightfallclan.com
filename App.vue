@@ -105,6 +105,7 @@
                 state.numResults = response.data.count
                 state.isLoading = false
                 resolve(response.data.posts)
+                mixpanel.track('Results returned')
               } else {
                 reject()
               }
