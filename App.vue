@@ -158,7 +158,8 @@
       },
       changeGid(gid) {
         state.gid = gid
-        this.reset()
+        state.page = 1
+        state.spotlightMsg = null
       },
       reset () {
         state.page = 1
