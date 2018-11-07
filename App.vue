@@ -27,9 +27,7 @@
     </p>
   </div>
   <div v-if="isLoading" style="margin-top: 60px"></div>
-  <div v-if="isLoading" v-for="n in 10" v-bind:key="n" class="post">
-    <facebook-loader></facebook-loader>
-  </div>
+  <vue-loading v-if="isLoading" type="spin" color="#75787c" :size="{ width: '50px', height: '50px' }"></vue-loading>
   <div v-if="numResults > 0 && !isLoading" id="pageNavigation">
     <h5>Page {{ page }} of {{ numPages }}</h5>
     <button @click="prevPage" v-if="page > 1">Prev Page</button>
@@ -69,14 +67,14 @@
   }
 
   import axios from 'axios'
-  import { FacebookLoader } from "vue-content-loader"
+  import { VueLoading } from 'vue-loading-template'
 
   export default {
     data () {
       return state
     },
     components: {
-      FacebookLoader
+      VueLoading
     },
     computed: {
       numPages () {
@@ -96,7 +94,7 @@
     },
     asyncComputed: {
       posts () {
-        const apiUrl = `${apiOrigin}/${gid}/${state.page}?user=${state.userQuery}&body=${state.bodyQuery}&sortOrder=${state.sortOrder}`
+        const apiUrl = `${apiOrigin}/${state.gid}/${state.page}?user=${state.userQuery}&body=${state.bodyQuery}&sortOrder=${state.sortOrder}`
         state.isLoading = true
 
         const userQueryAtTheTime = state.userQuery
@@ -143,7 +141,7 @@
       },
       getContext (id) {
         state.isLoading = true
-        const apiUrl = `${apiOrigin}/${gid}?getContext=${id}&sortOrder=${state.sortOrder}`
+        const apiUrl = `${apiOrigin}/${state.gid}?getContext=${id}&sortOrder=${state.sortOrder}`
 
         axios.get(apiUrl)
           .then(response => {
@@ -171,19 +169,32 @@
   }
 </script>
 
-<style>
+<style lang="scss">
+$lightGray: #484b51;
+$medGray: #2f3136;
+$darkGray: #202225;
+$lightText: #cfcfcf;
+$medText: #75787c;
+$grayAccent: #3e4147;
+$blue: #64a3d6;
+
 html {
   font-family: Arial, Helvetica, sans-serif;
   overflow-y: overlay;
 }
 
+body {
+  background: $medGray;
+}
+
 * {
   transition: all 200ms;
+  color: $lightText;
 }
 
 html input:focus, html button:focus {
   outline: none;
-  box-shadow: #7dcdea52 0 0 0px 4px;
+  // box-shadow: #7dcdea52 0 0 0px 4px;
 }
 
 a {
@@ -192,7 +203,7 @@ a {
 
 a, a:hover {
   text-decoration: none;
-  color: #00aef4;
+  color: $blue;
   font-weight: bold;
 }
 
@@ -201,19 +212,21 @@ h3, input, .post {
   margin: 10px auto;
   width: 500px;
   padding: 10px;
-  border: 2px solid #eeeeee;
+  border: 2px solid $grayAccent;
 }
 
 h3 {
   text-align: center;
-  color: gray;
+  color: $lightText;
   border: none;
   display: inline;
 }
 
 input {
-  border-radius: 20px;
-  border-color: #7ecae9;
+  border-radius: 5px;
+  border: 1px solid $grayAccent;
+  background: $lightGray;
+  color: $medText;
 }
 
 #header {
@@ -223,6 +236,8 @@ input {
 .post, .flashPost {
   border-radius: 10px;
   cursor: pointer;
+  border-radius: 0px;
+  border-width: 0 0 1px 0;
 }
 
 .date {
@@ -234,7 +249,7 @@ input {
   height: 75px;
   margin: 5px 20px 5px 5px;
   float: left;
-  border: 1px solid #dddddd;
+  border: 1px solid $grayAccent;
   border-radius: 100%;
 }
 
@@ -252,18 +267,18 @@ button {
   position: relative;
   top: -4px;
   font-weight: bold;
-  color: white;
-  border: 2px solid #00aef4;
+  color: $lightText;
+  border: 2px solid $blue;
   border-radius: 5px;
   width: 150px;
   height: 30px;
   line-height: 15px;
-  background: #00aef4;
+  background: $blue;
 }
 
 button:hover {
-  color: #00aef4;
-  background: white;
+  color: $blue;
+  background: $medGray;
 }
 
 #pageNavigation {
@@ -274,7 +289,12 @@ button:hover {
 #sidebar {
   height: 100%;
   width: 50px;
-  border-right: 1px solid #eee;
+  border-right: 1px solid $grayAccent;
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 10px;
+  background: $darkGray;
 }
 
 .groupPicker {
@@ -282,17 +302,22 @@ button:hover {
   height: 50px;
   display: block;
   margin: 10px 0;
+  cursor: pointer;
+}
+
+.groupPicker:first-child  {
+  margin-top: 0px;
 }
 
 @keyframes flash {
   0% {
-    border-color: #eeeeee;
+    border-color: $grayAccent;
   }
   50% {
     border-color: #ffe600;
   }
   100% {
-    border-color: #eeeeee;
+    border-color: $grayAccent;
   }
 }
 
