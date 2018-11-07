@@ -5,7 +5,7 @@
     <img class="groupPicker" src="https://t2.rbxcdn.com/4b27b485b47adb7c6a9403367089230d" @click="changeGid(80738)">
   </div>
   <h1 id="header">
-  <a href="/">ROBLOX Wall Archive</a>
+  <a @click="reset">ROBLOX Wall Archive</a>
   </h1>
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
@@ -14,16 +14,16 @@
     <h3 v-if="numResults == 0 && !isLoading">No results</h3>
     <button v-if="numResults > 0 && !isLoading" @click="page = 1; changeSortOrder()">Sort: {{ sortOrder == -1 ? 'New to old' : 'Old to new' }}</button>
   </div>
-  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" class="post" @click="getContext(post.id)">
+  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" class="post" @click.self="getContext(post.id)">
     <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
       <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
     </a>
     <p class="postContainer">
       <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
       <br><br>
-      <span v-html="post.body"></span>
+      <span @click.self="getContext(post.id)" v-html="post.body"></span>
       <br><br>
-      <span class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
+      <span @click.self="getContext(post.id)" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
     </p>
   </div>
   <div v-if="isLoading" style="margin-top: 60px"></div>
@@ -50,7 +50,8 @@
     bodyQuery: '',
     isLoading: true,
     page: 1,
-    gid: 85654
+    gid: 85654,
+    spotlightMsg: null
   }
 
   function sanitizePostsResponse(response) {
@@ -82,6 +83,17 @@
         return Math.ceil((state.numResults/10))
       }
     },
+    updated () {
+      if (state.spotlightMsg) {
+        const msg = document.getElementById(state.spotlightMsg)
+        msg.scrollIntoView({behavior: 'smooth', block: 'center'})
+        msg.classList.add('flash')
+
+        setTimeout(() => {
+          state.spotlightMsg = null
+        }, 500)
+      }
+    },
     asyncComputed: {
       posts () {
         const apiUrl = `${apiOrigin}/${gid}/${state.page}?user=${state.userQuery}&body=${state.bodyQuery}&sortOrder=${state.sortOrder}`
@@ -98,6 +110,7 @@
                 state.numResults = response.data.count
                 state.isLoading = false
                 resolve(response.data.posts)
+                mixpanel.track('Results returned')
               } else {
                 reject()
               }
@@ -116,7 +129,9 @@
         state.sortOrder = state.sortOrder*-1
       },
       searchUser (user) {
+        state.page = 1
         state.userQuery = user
+        document.body.scrollTop = document.documentElement.scrollTop = 0
       },
       prevPage () {
         if (!state.page > 1) return
@@ -131,11 +146,12 @@
         const apiUrl = `${apiOrigin}/${gid}?getContext=${id}&sortOrder=${state.sortOrder}`
 
         axios.get(apiUrl)
-        .then(response => {
+          .then(response => {
             state.page = response.data.page
             state.sortOrder = -1
             state.userQuery = ''
             state.bodyQuery = ''
+            state.spotlightMsg = id
           })
           .catch(err => {
             throw new Error(err)
@@ -143,6 +159,13 @@
       },
       changeGid(gid) {
         state.gid = gid
+      },
+      reset () {
+        state.page = 1
+        state.sortOrder = -1
+        state.userQuery = ''
+        state.bodyQuery = ''
+        state.spotlightMsg = null
       }
     }
   }
@@ -161,6 +184,10 @@ html {
 html input:focus, html button:focus {
   outline: none;
   box-shadow: #7dcdea52 0 0 0px 4px;
+}
+
+a {
+  cursor: pointer;
 }
 
 a, a:hover {
@@ -193,7 +220,7 @@ input {
   text-align: center;
 }
 
-.post {
+.post, .flashPost {
   border-radius: 10px;
   cursor: pointer;
 }
@@ -255,6 +282,22 @@ button:hover {
   height: 50px;
   display: block;
   margin: 10px 0;
+}
+
+@keyframes flash {
+  0% {
+    border-color: #eeeeee;
+  }
+  50% {
+    border-color: #ffe600;
+  }
+  100% {
+    border-color: #eeeeee;
+  }
+}
+
+.flash {
+  animation: 0.75s ease-in-out 0s 2 flash;
 }
 </style>
 
