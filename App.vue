@@ -1,5 +1,9 @@
 <template>
 <div>
+  <div id="sidebar">
+    <img class="groupPicker" src="https://t3.rbxcdn.com/888cf08084161f379ef2c13da25c8b92" @click="changeGid(85654)">
+    <img class="groupPicker" src="https://t2.rbxcdn.com/4b27b485b47adb7c6a9403367089230d" @click="changeGid(80738)">
+  </div>
   <h1 id="header">
   <a href="/">ROBLOX Wall Archive</a>
   </h1>
@@ -45,7 +49,8 @@
     userQuery: '',
     bodyQuery: '',
     isLoading: true,
-    page: 1
+    page: 1,
+    gid: 85654
   }
 
   function sanitizePostsResponse(response) {
@@ -79,7 +84,7 @@
     },
     asyncComputed: {
       posts () {
-        const apiUrl = `${apiOrigin}/85654/${state.page}?user=${state.userQuery}&body=${state.bodyQuery}&sortOrder=${state.sortOrder}`
+        const apiUrl = `${apiOrigin}/${gid}/${state.page}?user=${state.userQuery}&body=${state.bodyQuery}&sortOrder=${state.sortOrder}`
         state.isLoading = true
 
         const userQueryAtTheTime = state.userQuery
@@ -123,7 +128,7 @@
       },
       getContext (id) {
         state.isLoading = true
-        const apiUrl = `${apiOrigin}/85654?getContext=${id}&sortOrder=${state.sortOrder}`
+        const apiUrl = `${apiOrigin}/${gid}?getContext=${id}&sortOrder=${state.sortOrder}`
 
         axios.get(apiUrl)
         .then(response => {
@@ -135,6 +140,9 @@
           .catch(err => {
             throw new Error(err)
           })
+      },
+      changeGid(gid) {
+        state.gid = gid
       }
     }
   }
@@ -234,6 +242,19 @@ button:hover {
 #pageNavigation {
   text-align: center;
   margin: 20px;
+}
+
+#sidebar {
+  height: 100%;
+  width: 50px;
+  border-right: 1px solid #eee;
+}
+
+.groupPicker {
+  width: 50px;
+  height: 50px;
+  display: block;
+  margin: 10px 0;
 }
 </style>
 
