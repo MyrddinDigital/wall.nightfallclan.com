@@ -158,6 +158,7 @@
       },
       changeGid(gid) {
         state.gid = gid
+        this.reset()
       },
       reset () {
         state.page = 1
