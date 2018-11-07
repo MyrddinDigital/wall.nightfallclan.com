@@ -3,6 +3,7 @@
   <div id="sidebar">
     <img class="groupPicker" src="https://t3.rbxcdn.com/888cf08084161f379ef2c13da25c8b92" @click="changeGid(85654)">
     <img class="groupPicker" src="https://t2.rbxcdn.com/4b27b485b47adb7c6a9403367089230d" @click="changeGid(80738)">
+    <img class="groupPicker" src="https://t3.rbxcdn.com/f3cfe7940b1fdd9b3cf1f195aa86fe7c" @click="changeGid(18)">
   </div>
   <h1 id="header">
   <a @click="reset">ROBLOX Wall Archive</a>
