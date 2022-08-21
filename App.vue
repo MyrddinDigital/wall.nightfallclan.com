@@ -226,15 +226,15 @@ a {
   &.resetLink::after,
   &.searchLink::after {
     opacity: 0;
-    position: relative;
-    left: 6px;
-    bottom: 6px;
-    font-size: 75%;
     transition: all 150ms;
   }
 
   &.outsideLink::after {
     content: '🡥';
+    position: relative;
+    left: 6px;
+    bottom: 6px;
+    font-size: 75%;
   }
 
   &.resetLink::after {
@@ -249,6 +249,7 @@ a {
   &.resetLink:hover,
   &.searchLink:hover {
     &::after {
+      text-decoration: none;
       opacity: 1;
     }
   }
