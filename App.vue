@@ -88,11 +88,11 @@
         if (msg) {
           msg.scrollIntoView({behavior: 'smooth', block: 'center'})
           msg.classList.add('flash')
-        }
 
-        setTimeout(() => {
-          state.spotlightMsg = null
-        }, 500)
+          setTimeout(() => {
+            state.spotlightMsg = null
+          }, 500)
+        }
       }
     },
     asyncComputed: {
