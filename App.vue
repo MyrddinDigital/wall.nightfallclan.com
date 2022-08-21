@@ -318,7 +318,7 @@ button:hover {
     border-color: transparent transparent $grayAccent transparent;
   }
   50% {
-    border-color: transparent transparent #ffe600 transparent;
+    border-color: #ffe600;
   }
   100% {
     border-color: transparent transparent $grayAccent transparent;
