@@ -6,11 +6,12 @@
     <img :class="`groupPicker ${ gid == 18 && 'groupPicker--active' }`" src="assets/images/ucr.png" @click="changeGid(18)">
   </div>
 
-  <h1 id="header"><a class="resetLink" @click="reset">Roblox Wall Archive</a></h1>
+  <h1 id="header">Roblox Wall Archive</h1>
   <h2 class="selectedGroupName">
     <a class="outsideLink" target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
   </h2>
 
+  <button class="resetLink" @click="reset" v-show="canResetSearch">Clear</button>
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
 
@@ -92,6 +93,9 @@
     computed: {
       numPages () {
         return Math.ceil((state.numResults/10))
+      },
+      canResetSearch () {
+        return state.userQuery || state.bodyQuery
       }
     },
     updated () {
