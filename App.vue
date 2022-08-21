@@ -159,6 +159,7 @@
               state.sortOrder = -1
               state.userQuery = ''
               state.bodyQuery = ''
+              state.spotlightMsg = id
               
               const msg = document.getElementById(id)
               if (msg) {
