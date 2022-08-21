@@ -314,12 +314,15 @@ button:hover {
 
 @keyframes flash {
   0% {
+    border-width: 0px;
     border-color: $grayAccent;
   }
   50% {
+    border-width: 3px;
     border-color: #ffe600;
   }
   100% {
+    border-width: 0px;
     border-color: $grayAccent;
   }
 }
