@@ -5,18 +5,19 @@
     <img class="groupPicker" src="assets/images/uaf.png" @click="changeGid(80738)">
     <img class="groupPicker" src="assets/images/ucr.png" @click="changeGid(18)">
   </div>
-  <h1 id="header">
-  <a @click="reset">ROBLOX Wall Archive</a>
-  </h1>
+
+  <h1 id="header"><a @click="reset">ROBLOX Wall Archive</a></h1>
+
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
+
   <div id="resultsInfoContainer">
     <h3 v-if="numResults > 0 && !isLoading">showing {{ posts ? posts.length : 0 }} results of {{ numResults }}</h3>
     <h3 v-if="numResults == 0 && !isLoading">No results</h3>
     <button v-if="numResults > 0 && !isLoading" @click="page = 1; changeSortOrder()">Sort: {{ sortOrder == -1 ? 'New to old' : 'Old to new' }}</button>
   </div>
-  <!-- Post w/ context prompt -->
-  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" class="post" @click.self="getContext(post.id)">
+
+  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" :class="`post ${ (state.userQuery != '' || state.bodyQuery != '') && 'post--promptClick' }`" @click.self="getContext(post.id)">
     <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
       <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
     </a>
@@ -28,21 +29,10 @@
       <span @click.self="getContext(post.id)" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
     </p>
   </div>
-  <!-- Post without context prompt -->
-  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" class="post">
-    <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
-      <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
-    </a>
-    <p class="postContainer">
-      <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
-      <br><br>
-      <span v-html="post.body"></span>
-      <br><br>
-      <span class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
-    </p>
-  </div>
+
   <div v-if="isLoading" style="margin-top: 60px"></div>
   <vue-loading v-if="isLoading" type="bars" color="#75787c" :size="{ width: '50px', height: '50px' }"></vue-loading>
+
   <div v-if="numResults > 0 && !isLoading" id="pageNavigation">
     <h5>Page {{ page }} of {{ numPages }}</h5>
     <button @click="prevPage" v-if="page > 1">Prev Page</button>
@@ -256,10 +246,13 @@ input {
 
 .post, .flashPost {
   border-radius: 10px;
-  cursor: pointer;
   border-radius: 0px;
   border-width: 1px;
   border-color: transparent transparent $grayAccent transparent;
+}
+
+.post--promptClick {
+  cursor: pointer;
 }
 
 .date {
