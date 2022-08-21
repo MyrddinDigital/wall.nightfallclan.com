@@ -154,8 +154,14 @@
               state.sortOrder = -1
               state.userQuery = ''
               state.bodyQuery = ''
+              state.spotlightMsg = id
+            } else {
+              const msg = document.getElementById(id)
+              if (msg) {
+                msg.scrollIntoView({behavior: 'smooth', block: 'center'})
+                msg.classList.add('flash')
+              }
             }
-            state.spotlightMsg = id
           })
           .catch(err => {
             throw new Error(err)
