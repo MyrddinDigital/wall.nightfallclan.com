@@ -211,7 +211,7 @@ body {
 }
 
 * {
-  transition: all 200ms;
+  transition: all 100ms;
   color: $lightText;
 }
 
@@ -233,7 +233,6 @@ a {
     opacity: 0;
     position: relative;
     left: 6px;
-    transition: all 150ms;
   }
 
   &.outsideLink::after {
@@ -265,7 +264,7 @@ a:hover {
 }
 
 .resetLink {
-  margin: 0 auto;
+  margin: -21px auto 0 auto;
   width: 500px;
   display: block;
   text-align: right;
