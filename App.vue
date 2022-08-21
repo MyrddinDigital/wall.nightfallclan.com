@@ -143,6 +143,8 @@
         state.page++
       },
       getContext (id) {
+        if (state.sortOrder === '' && state.bodyQuery === '') return
+        
         state.isLoading = true
         const apiUrl = `${apiOrigin}/${state.gid}?getContext=${id}&sortOrder=${state.sortOrder}`
 
