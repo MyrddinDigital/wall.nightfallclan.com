@@ -337,7 +337,10 @@ button:hover {
 
 .selectedGroupName {
   text-align: center;
-  color: white;
+
+  a {
+    color: white;
+  }
 }
 
 @keyframes flash {
