@@ -148,6 +148,7 @@
 
         axios.get(apiUrl)
           .then(response => {
+            console.log('trying...', id)
             state.page = response.data.page
             state.sortOrder = -1
             state.userQuery = ''
