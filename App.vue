@@ -225,14 +225,15 @@ a {
   &.outsideLink::after,
   &.resetLink::after,
   &.searchLink::after {
+    text-decoration: none;
     opacity: 0;
+    position: relative;
+    left: 6px;
     transition: all 150ms;
   }
 
   &.outsideLink::after {
     content: '🡥';
-    position: relative;
-    left: 6px;
     bottom: 6px;
     font-size: 75%;
   }

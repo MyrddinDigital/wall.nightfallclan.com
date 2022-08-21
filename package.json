@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "parcel index.html",
     "build": "parcel build index.html",
-    "deploy": "git add . && git commit -am'save' && git push"
+    "deploy": "git add . && git commit -am'npm script deploy' && git push"
   },
   "repository": {
     "type": "git",
