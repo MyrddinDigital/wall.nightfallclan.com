@@ -85,8 +85,8 @@
     updated () {
       if (state.spotlightMsg) {
         const msg = document.getElementById(state.spotlightMsg)
-        msg.scrollIntoView({behavior: 'smooth', block: 'center'})
-        msg.classList.add('flash')
+        msg?.scrollIntoView({behavior: 'smooth', block: 'center'})
+        msg?.classList.add('flash')
 
         setTimeout(() => {
           state.spotlightMsg = null
