@@ -15,6 +15,7 @@
     <h3 v-if="numResults == 0 && !isLoading">No results</h3>
     <button v-if="numResults > 0 && !isLoading" @click="page = 1; changeSortOrder()">Sort: {{ sortOrder == -1 ? 'New to old' : 'Old to new' }}</button>
   </div>
+  <!-- Post w/ context prompt -->
   <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" class="post" @click.self="getContext(post.id)">
     <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
       <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
@@ -22,11 +23,22 @@
     <p class="postContainer">
       <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
       <br><br>
-      <span v-if="userQuery == '' && bodyQuery == ''" v-html="post.body"></span>
-      <span v-else @click.self="getContext(post.id)" v-html="post.body"></span>
+      <span @click.self="getContext(post.id)" v-html="post.body"></span>
       <br><br>
-      <span v-if="userQuery == '' && bodyQuery == ''" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
-      <span v-else @click.self="getContext(post.id)" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
+      <span @click.self="getContext(post.id)" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
+    </p>
+  </div>
+  <!-- Post without context prompt -->
+  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" class="post">
+    <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
+      <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
+    </a>
+    <p class="postContainer">
+      <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
+      <br><br>
+      <span v-html="post.body"></span>
+      <br><br>
+      <span class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
     </p>
   </div>
   <div v-if="isLoading" style="margin-top: 60px"></div>
