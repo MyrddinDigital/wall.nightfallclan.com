@@ -11,7 +11,7 @@
     <a class="outsideLink" target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
   </h2>
 
-  <button class="resetLink" @click="reset" v-show="canResetSearch">Clear</button>
+  <a class="resetLink" @click="reset" v-show="canResetSearch">Clear</a>
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
 
@@ -264,6 +264,12 @@ a:hover {
   text-decoration: none;
 }
 
+.resetLink {
+  width: 500px;
+  display: block;
+  text-align: right;
+}
+
 h3, input, .post {
   display: block;
   margin: 10px auto;
@@ -288,6 +294,8 @@ input {
 
 #header {
   text-align: center;
+  color: $blue;
+  font-weight: bold;
 }
 
 .post, .flashPost {
