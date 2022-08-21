@@ -222,9 +222,10 @@ a {
   color: $blue;
   font-weight: bold;
 
-  &::after {
-    content: '🡥';
-    opacity: 1;
+  &.outsideLink::after,
+  &.resetLink::after,
+  &.searchLink::after {
+    opacity: 0;
     position: relative;
     left: 6px;
     bottom: 6px;
@@ -232,7 +233,11 @@ a {
     transition: all 150ms;
   }
 
-  &.refreshLink::after {
+  &.outsideLink::after {
+    content: '🡥';
+  }
+
+  &.resetLink::after {
     content: '⭮';
   }
 
@@ -241,10 +246,10 @@ a {
   }
 
   &.outsideLink:hover,
-  &.refreshLink:hover,
+  &.resetLink:hover,
   &.searchLink:hover {
     &::after {
-      opacity: 0;
+      opacity: 1;
     }
   }
 }
