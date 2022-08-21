@@ -11,7 +11,7 @@
     <a class="outsideLink" target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
   </h2>
 
-  <a :class="`resetLink ${ canResetSearch && 'resetLink--active' }`" @click="reset">Clear</a>
+  <a :class="`resetLink ${ canResetSearch && 'resetLink--active' }`" @click="reset">Reset</a>
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
 
