@@ -149,10 +149,12 @@
         axios.get(apiUrl)
           .then(response => {
             console.log('trying...', id, response.data.page)
-            state.page = response.data.page
-            state.sortOrder = -1
-            state.userQuery = ''
-            state.bodyQuery = ''
+            if (response.data.page !== state.page) {
+              state.page = response.data.page
+              state.sortOrder = -1
+              state.userQuery = ''
+              state.bodyQuery = ''
+            }
             state.spotlightMsg = id
           })
           .catch(err => {
