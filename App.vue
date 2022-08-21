@@ -279,7 +279,7 @@ input {
   border-radius: 5px;
   border: 1px solid $grayAccent;
   background: $lightGray;
-  color: $medText;
+  color: $lightText;
 }
 
 #header {
