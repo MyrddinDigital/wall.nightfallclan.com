@@ -265,6 +265,7 @@ a:hover {
 }
 
 .resetLink {
+  margin: 0 auto;
   width: 500px;
   display: block;
   text-align: right;
