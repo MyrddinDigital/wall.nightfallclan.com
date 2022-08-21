@@ -350,7 +350,7 @@ button:hover {
   position: fixed;
   top: 0;
   left: 0;
-  padding: 10px;
+  padding: 10px 0 0 10px;
   background: $darkGray;
 }
 
@@ -360,6 +360,9 @@ button:hover {
   display: block;
   margin: 10px 0;
   cursor: pointer;
+  padding: 5px;
+  position: relative;
+  right: 10px;
 }
 
 .groupPicker:first-child  {
@@ -369,6 +372,7 @@ button:hover {
 .groupPicker--active {
   background-color: #2f3136;
   border-radius: 5px;
+  right: 0;
 }
 
 .selectedGroupName {
