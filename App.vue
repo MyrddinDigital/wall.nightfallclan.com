@@ -211,7 +211,7 @@ body {
 }
 
 * {
-  transition: all 100ms;
+  transition: all 150ms;
   color: $lightText;
 }
 
@@ -233,6 +233,7 @@ a {
     opacity: 0;
     position: relative;
     left: 6px;
+    transition: all 150ms;
   }
 
   &.outsideLink::after {
