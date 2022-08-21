@@ -219,7 +219,7 @@ a {
 }
 
 a, a:hover {
-  text-decoration: none;
+  text-decoration: underline;
   color: $blue;
   font-weight: bold;
 }
