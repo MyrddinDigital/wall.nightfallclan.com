@@ -22,10 +22,10 @@
     <p class="postContainer">
       <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
       <br><br>
-      <span v-if="state.userQuery == '' && state.bodyQuery == ''" v-html="post.body"></span>
+      <span v-if="userQuery == '' && bodyQuery == ''" v-html="post.body"></span>
       <span v-else @click.self="getContext(post.id)" v-html="post.body"></span>
       <br><br>
-      <span v-if="state.userQuery == '' && state.bodyQuery == ''" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
+      <span v-if="userQuery == '' && bodyQuery == ''" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
       <span v-else @click.self="getContext(post.id)" class="date">{{ new Date(post.created).toLocaleString('en-US') }}</span>
     </p>
   </div>
