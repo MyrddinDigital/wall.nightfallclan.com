@@ -6,9 +6,9 @@
     <img :class="`groupPicker ${ gid == 18 && 'groupPicker--active' }`" src="assets/images/ucr.png" @click="changeGid(18)">
   </div>
 
-  <h1 id="header"><a @click="reset">ROBLOX Wall Archive</a></h1>
+  <h1 id="header"><a @click="reset">ROBLOX Wall Archive ⭮</a></h1>
   <h2 class="selectedGroupName">
-    <a target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
+    <a target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }} 🡥</a>
   </h2>
 
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
