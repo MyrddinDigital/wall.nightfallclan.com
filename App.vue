@@ -240,7 +240,8 @@ input {
   border-radius: 10px;
   cursor: pointer;
   border-radius: 0px;
-  border-width: 0 0 1px 0;
+  border-width: 1px;
+  border-color: transparent transparent $grayAccent transparent;
 }
 
 .date {
@@ -314,16 +315,13 @@ button:hover {
 
 @keyframes flash {
   0% {
-    border-width: 0px;
-    border-color: $grayAccent;
+    border-color: transparent transparent $grayAccent transparent;
   }
   50% {
-    border-width: 3px;
-    border-color: #ffe600;
+    border-color: transparent transparent #ffe600 transparent;
   }
   100% {
-    border-width: 0px;
-    border-color: $grayAccent;
+    border-color: transparent transparent $grayAccent transparent;
   }
 }
 
