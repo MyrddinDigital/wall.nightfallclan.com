@@ -11,7 +11,7 @@
     <a class="outsideLink" target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
   </h2>
 
-  <a class="resetLink" @click="reset" v-show="canResetSearch">Clear</a>
+  <a :class="`resetLink ${ canResetSearch && 'resetLink--active' }`" @click="reset">Clear</a>
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
 
@@ -95,7 +95,7 @@
         return Math.ceil((state.numResults/10))
       },
       canResetSearch () {
-        return state.userQuery || state.bodyQuery
+        return state.userQuery || state.bodyQuery || state.page > 1
       }
     },
     updated () {
@@ -268,6 +268,11 @@ a:hover {
   width: 500px;
   display: block;
   text-align: right;
+  opacity: 0;
+
+  &--active {
+    opacity: 1;
+  }
 }
 
 h3, input, .post {
