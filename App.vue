@@ -28,7 +28,7 @@
     </p>
   </div>
   <div v-if="isLoading" style="margin-top: 60px"></div>
-  <vue-loading v-if="isLoading" type="spin" color="#75787c" :size="{ width: '50px', height: '50px' }"></vue-loading>
+  <vue-loading v-if="isLoading" type="bars" color="#75787c" :size="{ width: '50px', height: '50px' }"></vue-loading>
   <div v-if="numResults > 0 && !isLoading" id="pageNavigation">
     <h5>Page {{ page }} of {{ numPages }}</h5>
     <button @click="prevPage" v-if="page > 1">Prev Page</button>
@@ -143,30 +143,17 @@
         state.page++
       },
       getContext (id) {
+        state.isLoading = true
         const apiUrl = `${apiOrigin}/${state.gid}?getContext=${id}&sortOrder=${state.sortOrder}`
 
         axios.get(apiUrl)
           .then(response => {
-            if (response.data.page !== state.page) {
-              console.log('trying...', id, response.data.page)
-              state.isLoading = true
-              state.page = response.data.page
-              state.sortOrder = -1
-              state.userQuery = ''
-              state.bodyQuery = ''
-              state.spotlightMsg = id
-            } else {
-              state.sortOrder = -1
-              state.userQuery = ''
-              state.bodyQuery = ''
-              state.spotlightMsg = id
-              
-              const msg = document.getElementById(id)
-              if (msg) {
-                msg.scrollIntoView({behavior: 'smooth', block: 'center'})
-                msg.classList.add('flash')
-              }
-            }
+            console.log('trying...', id, response.data.page)
+            state.sortOrder = -1
+            state.userQuery = ''
+            state.bodyQuery = ''
+            state.spotlightMsg = id
+            state.page = response.data.page
           })
           .catch(err => {
             throw new Error(err)
