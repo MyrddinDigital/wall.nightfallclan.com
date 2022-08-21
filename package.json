@@ -29,8 +29,8 @@
   },
   "devDependencies": {
     "@vue/component-compiler-utils": "^2.3.0",
-    "cssnano": "^4.1.7",
-    "parcel": "^1.10.3",
+    "cssnano": "^4.1.11",
+    "parcel": "^1.12.4",
     "sass": "^1.14.3",
     "vue-template-compiler": "^2.5.17"
   }
