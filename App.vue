@@ -7,6 +7,7 @@
   </div>
 
   <h1 id="header"><a @click="reset">ROBLOX Wall Archive</a></h1>
+  <h2 class="selectedGroupName"><a :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a></h2>
 
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
@@ -54,7 +55,12 @@
     isLoading: true,
     page: 1,
     gid: 85654,
-    spotlightMsg: null
+    spotlightMsg: null,
+    groupNames: {
+      85654: 'Nightfall Clan',
+      80738: 'Urban Assault Forces',
+      18: 'United Clan of ROBLOX'
+    }
   }
 
   function sanitizePostsResponse(response) {
@@ -327,6 +333,10 @@ button:hover {
 .groupPicker--active {
   background-color: #2f3136;
   border-radius: 5px;
+}
+
+.selectedGroupName {
+  text-align: center;
 }
 
 @keyframes flash {
