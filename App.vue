@@ -17,7 +17,7 @@
     <button v-if="numResults > 0 && !isLoading" @click="page = 1; changeSortOrder()">Sort: {{ sortOrder == -1 ? 'New to old' : 'Old to new' }}</button>
   </div>
 
-  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" :class="`post ${ (state.userQuery != '' || state.bodyQuery != '') && 'post--promptClick' }`" @click.self="getContext(post.id)">
+  <div v-if="!isLoading" v-for="post in posts" v-bind:key="post.id" v-bind:id="post.id" :class="`post ${ (userQuery || bodyQuery) && 'post--promptClick' }`" @click.self="getContext(post.id)">
     <a target="_blank" :href="`https://www.roblox.com/users/${post.poster.user.userId}/profile`">
       <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
     </a>
