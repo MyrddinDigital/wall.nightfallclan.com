@@ -144,17 +144,17 @@
       },
       getContext (id) {
         if (state.sortOrder === '' && state.bodyQuery === '') return
-        
+
         state.isLoading = true
         const apiUrl = `${apiOrigin}/${state.gid}?getContext=${id}&sortOrder=${state.sortOrder}`
 
         axios.get(apiUrl)
           .then(response => {
+            state.spotlightMsg = id
             state.page = response.data.page
             state.sortOrder = -1
             state.userQuery = ''
             state.bodyQuery = ''
-            state.spotlightMsg = id
           })
           .catch(err => {
             throw new Error(err)
