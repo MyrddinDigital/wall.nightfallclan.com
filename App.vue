@@ -6,9 +6,9 @@
     <img :class="`groupPicker ${ gid == 18 && 'groupPicker--active' }`" src="assets/images/ucr.png" @click="changeGid(18)">
   </div>
 
-  <h1 id="header"><a @click="reset">ROBLOX Wall Archive ⭮</a></h1>
+  <h1 id="header"><a class="resetLink" @click="reset">ROBLOX Wall Archive</a></h1>
   <h2 class="selectedGroupName">
-    <a target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }} 🡥</a>
+    <a class="outsideLink" target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
   </h2>
 
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
@@ -25,7 +25,7 @@
       <img class="avatar" :src="`https://www.roblox.com/headshot-thumbnail/image?userId=${post.poster.user.userId}&width=420&height=420&format=png`">
     </a>
     <p class="postContainer">
-      <a @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
+      <a class="searchLink" @click="searchUser(post.poster.user.username)">{{ post.poster.user.username }}</a>
       <br><br>
       <span @click.self="getContext(post.id)" v-html="post.body"></span>
       <br><br>
@@ -218,12 +218,35 @@ html input:focus, html button:focus {
 
 a {
   cursor: pointer;
-}
-
-a {
   text-decoration: none;
   color: $blue;
   font-weight: bold;
+
+  &::after {
+    content: '🡥';
+    opacity: 1;
+    position: relative;
+    left: 6px;
+    bottom: 6px;
+    font-size: 75%;
+    transition: all 150ms;
+  }
+
+  &.refreshLink::after {
+    content: '⭮';
+  }
+
+  &.searchLink::after {
+    content: '+';
+  }
+
+  &.outsideLink:hover,
+  &.refreshLink:hover,
+  &.searchLink:hover {
+    &::after {
+      opacity: 0;
+    }
+  }
 }
 
 a:hover {
