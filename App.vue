@@ -319,12 +319,15 @@ button:hover {
 @keyframes flash {
   0% {
     border-color: transparent transparent $grayAccent transparent;
+    background-color: transparent;
   }
   50% {
     border-color: #ffe600;
+    background-color: rgba(255, 255, 0, 0.122);
   }
   100% {
     border-color: transparent transparent $grayAccent transparent;
+    background-color: transparent;
   }
 }
 
