@@ -156,6 +156,10 @@
               state.bodyQuery = ''
               state.spotlightMsg = id
             } else {
+              state.sortOrder = -1
+              state.userQuery = ''
+              state.bodyQuery = ''
+              
               const msg = document.getElementById(id)
               if (msg) {
                 msg.scrollIntoView({behavior: 'smooth', block: 'center'})
