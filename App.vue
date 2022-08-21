@@ -6,7 +6,7 @@
     <img :class="`groupPicker ${ gid == 18 && 'groupPicker--active' }`" src="assets/images/ucr.png" @click="changeGid(18)">
   </div>
 
-  <h1 id="header"><a class="resetLink" @click="reset">ROBLOX Wall Archive</a></h1>
+  <h1 id="header"><a class="resetLink" @click="reset">Roblox Wall Archive</a></h1>
   <h2 class="selectedGroupName">
     <a class="outsideLink" target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
   </h2>
