@@ -1,9 +1,9 @@
 <template>
 <div>
   <div id="sidebar">
-    <img class="groupPicker" src="assets/images/nfc.png" @click="changeGid(85654)">
-    <img class="groupPicker" src="assets/images/uaf.png" @click="changeGid(80738)">
-    <img class="groupPicker" src="assets/images/ucr.png" @click="changeGid(18)">
+    <img :class="`groupPicker ${ gid == 85654 && 'groupPicker--active' }`" src="assets/images/nfc.png" @click="changeGid(85654)">
+    <img :class="`groupPicker ${ gid == 80738 && 'groupPicker--active' }`" src="assets/images/uaf.png" @click="changeGid(80738)">
+    <img :class="`groupPicker ${ gid == 18 && 'groupPicker--active' }`" src="assets/images/ucr.png" @click="changeGid(18)">
   </div>
 
   <h1 id="header"><a @click="reset">ROBLOX Wall Archive</a></h1>
@@ -322,6 +322,11 @@ button:hover {
 
 .groupPicker:first-child  {
   margin-top: 0px;
+}
+
+.groupPicker--active {
+  background-color: #2f3136;
+  border-radius: 5px;
 }
 
 @keyframes flash {
