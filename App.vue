@@ -218,10 +218,14 @@ a {
   cursor: pointer;
 }
 
-a, a:hover {
-  text-decoration: underline;
+a {
+  text-decoration: none;
   color: $blue;
   font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 
 h3, input, .post {
