@@ -7,7 +7,9 @@
   </div>
 
   <h1 id="header"><a @click="reset">ROBLOX Wall Archive</a></h1>
-  <h2 class="selectedGroupName"><a :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a></h2>
+  <h2 class="selectedGroupName">
+    <a target="_blank" :href="`https://www.roblox.com/groups/${gid}`">{{ groupNames[gid] }}</a>
+  </h2>
 
   <input type="text" v-model="userQuery" @keyup="page = 1" placeholder="Search for a user"/>
   <input type="text" v-model="bodyQuery" @keyup="page = 1" placeholder="Search for a specific post"/>
