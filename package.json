@@ -15,6 +15,7 @@
     "@tsconfig/svelte": "^5.0.4",
     "@types/node-fetch": "^2.6.12",
     "node-fetch": "^3.3.2",
+    "rollup": "^4.44.0",
     "sass-embedded": "^1.89.2",
     "svelte": "^5.28.1",
     "svelte-check": "^4.1.6",
