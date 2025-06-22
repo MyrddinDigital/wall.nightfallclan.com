@@ -6,7 +6,15 @@
   NODE_VERSION = "20"
   NPM_VERSION = "10"
 
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Proxy for Roblox thumbnails API
+[[redirects]]
+  from = "/v1/*"
+  to = "https://thumbnails.roblox.com/v1/:splat"
+  status = 200
+  force = true
