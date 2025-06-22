@@ -258,14 +258,14 @@
           const element = document.getElementById(`post-${lastPost.id}`);
           if (element) {
             // Scroll to the element with some extra space at the bottom
-            element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            element.scrollIntoView({ behavior: 'instant', block: 'end' });
             // Add a small additional scroll to ensure we're at the very bottom
             setTimeout(() => {
-              window.scrollBy({ top: 100, behavior: 'smooth' });
-            }, 100);
+              window.scrollBy({ top: 100, behavior: 'instant' });
+            }, 0);
           } else {
             // Fallback if element not rendered for some reason
-            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
           }
         }, 50);
       }
