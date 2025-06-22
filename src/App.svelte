@@ -35,46 +35,122 @@
   let highlightedPostId = $state(0)
 
   $effect(() => {
+    // Control body overflow based on loading state
+    if (loading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Cleanup function to reset overflow when component is destroyed
+    return () => {
+      document.body.style.overflow = '';
+    };
+  });
+
+  $effect(() => {
     // Reading inputValue here establishes a dependency, so this effect re-runs
     const value = inputValue;
     const valueUser = inputValueUser;
-    const timeout = setTimeout(() => {
-      query = value;
-      queryUser = valueUser;
-      
-      // Only reset scroll if there's an active query. This prevents a race condition with gotoContext.
-      if (value || valueUser) {
+    
+    // Only debounce if the values are changing due to user input, not programmatic changes
+    const isUserInput = document.activeElement?.tagName === 'INPUT';
+    const delay = isUserInput ? 300 : 0;
+    
+    // Set loading state when search values change
+    if (value !== query || valueUser !== queryUser) {
+      loading = true;
+    }
+    
+    const timeout = setTimeout(async () => {
+      // Only update if values have changed
+      if (value !== query || valueUser !== queryUser) {
+        // Always reset pagination when search changes
         visibleStartIndex = 0;
         visibleEndIndex = postsPerLoad;
+        
+        // Update the query values
+        query = value;
+        queryUser = valueUser;
+        
+        // Scroll to top when there's an active search
+        if (value || valueUser) {
+          window.scrollTo(0, 0);
+        }
+        
+        // Small delay to ensure loading state is shown
+        await new Promise(resolve => setTimeout(resolve, 50));
+        loading = false;
       }
-    }, 300);
+    }, delay);
+    
     return () => {
       clearTimeout(timeout);
     };
   });
 
+  const SKELETON_COUNT = 15; // Number of skeleton posts to show when loading
+
   let posts: Posts = $state([])
-  let filteredPosts: Posts = $derived.by(() => {
-    let filteredPosts: Posts = posts;
+  let loading = $state(true)
 
-    if (!query && !queryUser) return posts;
-    if (queryUser) filteredPosts = filteredPosts.filter(post => post.poster?.user.username.toLowerCase().includes(queryUser.toLowerCase()));
-    if (query) filteredPosts = filteredPosts.filter(post => post.body.toLowerCase().includes(query.toLowerCase()));
-
-    return filteredPosts
-  })
+  let filteredPosts: Posts = $state([]);
+  
+  // Reactive statement to handle filtering
+  $effect(() => {
+    // Skip if we're already loading or posts aren't loaded yet
+    if (loading || !posts.length) return;
+    
+    // Create a new array to trigger reactivity
+    let result = [...posts];
+    
+    if (queryUser) {
+      result = result.filter(post => 
+        post.poster?.user.username.toLowerCase().includes(queryUser.toLowerCase())
+      );
+    }
+    
+    if (query) {
+      result = result.filter(post => 
+        post.body.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    
+    filteredPosts = result;
+  });
   let currentPagePosts: SanitizedPosts = $derived(sanitizePosts(filteredPosts.slice(visibleStartIndex, visibleEndIndex)))
 
   let showJumpToOldest = $derived(visibleStartIndex > 0);
   let showJumpToNewest = $derived(visibleEndIndex < filteredPosts.length);
 
   fetch('https://raw.githubusercontent.com/MerlinSoftworks/rbx-wall-archive/refs/heads/master/public/data/NFC.json').then(async res => {
-    posts = await res.json()
+    posts = await res.json();
+    loading = false;
   })
 
-  function searchUser(username: string) {
+  async function searchUser(username: string) {
+    // Reset pagination first
+    visibleStartIndex = 0;
+    visibleEndIndex = postsPerLoad;
+    
+    // Set loading state immediately
+    loading = true;
+    
+    // Force UI update by waiting for the next tick
+    await tick();
+    
+    // Update the search values in the next microtask
+    await Promise.resolve();
     inputValueUser = username;
     queryUser = username;
+    
+    // Scroll to top instantly when clicking a username
+    window.scrollTo(0, 0);
+    
+    // Ensure loading state is shown for at least 100ms
+    setTimeout(() => {
+      loading = false;
+    }, 100);
   }
 
   function sanitizePosts(posts: Posts): SanitizedPosts {
@@ -150,11 +226,19 @@
   }
 
   function jumpToOldest() {
+    // First set the indices to show the oldest posts
     visibleStartIndex = 0;
     visibleEndIndex = postsPerLoad;
-
+    
+    // Force immediate scroll to top
+    window.scrollTo({ top: 0 });
+    
+    // Then update the UI and smooth scroll if needed
     tick().then(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Small delay to ensure the DOM has updated
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
     });
   }
 
@@ -218,27 +302,35 @@
 </script>
 
 <main>
-  {#if showJumpToOldest}
+  {#if showJumpToOldest && !loading}
     <button class="jump-button jump-button--top" onclick={jumpToOldest}>Jump To Oldest</button>
   {/if}
   {#if posts}
     <div class="search-container">
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValue} placeholder="Search posts" id="search-posts" />
+        <input type="text" bind:value={inputValue} placeholder="Search posts" id="search-posts" oninput={() => { loading = true; setTimeout(() => loading = false, 500); }} />
         {#if inputValue}
-          <button class="clear-button" onclick={(e) => {
+          <button class="clear-button" onclick={async (e) => {
             e.preventDefault();
             inputValue = '';
+            loading = true;
+            await tick();
+            window.scrollTo(0, 0);
+            setTimeout(() => loading = false, 100);
             document.getElementById('search-posts')?.focus();
           }}>&times;</button>
         {/if}
       </div>
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValueUser} placeholder="Search users" id="search-users" />
+        <input type="text" bind:value={inputValueUser} placeholder="Search users" id="search-users" oninput={() => { loading = true; setTimeout(() => loading = false, 500); }} />
         {#if inputValueUser}
-          <button class="clear-button" onclick={(e) => {
+          <button class="clear-button" onclick={async (e) => {
             e.preventDefault();
             inputValueUser = '';
+            loading = true;
+            await tick();
+            window.scrollTo(0, 0);
+            setTimeout(() => loading = false, 100);
             document.getElementById('search-users')?.focus();
           }}>&times;</button>
         {/if}
@@ -259,44 +351,59 @@
       <div use:observeTop class="sentinel"></div>
     {/if}
 
-    {#each currentPagePosts as post}
-      <div id="post-{post.id}" class="post {post.id === highlightedPostId ? 'post--highlighted' : ''}">
-        {#if queryUser || query}
-          <button class="context-jump" onclick={() => gotoContext(post.id)}>Jump</button>
-        {/if}
-        <a href={`https://www.roblox.com/users/${post.poster.user.userId}/profile`} class="post__avatar-container" target="_blank" rel="noopener noreferrer">
-          {#await getAvatar(post.poster.user.userId)}
-            <div class="post__avatar post__avatar--loading"></div>
-          {:then avatarUrl}
-            <img class="post__avatar" src={avatarUrl} alt="">
-          {:catch error}
-            <div class="post__avatar post__avatar--loading"></div>
-          {/await}
-        </a>
-
-        <div class="post__content">
-          <div class="post__user-date-container">
-            <button class="post__user" onclick={() => searchUser(post.poster.user.username)}>
-              { post.poster.user.username }
-            </button>
-            <span class="post__date">
-              {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(post.created))}, 
-              {new Date(post.created).getFullYear()} at 
-              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(post.created))}
-            </span>
+    {#if loading}
+      {#each Array(SKELETON_COUNT) as _, i}
+        <div class="post post--skeleton">
+          <div class="post__avatar post__avatar--loading"></div>
+          <div class="post__content">
+            <div class="post__user-date-container">
+              <div class="skeleton skeleton-user"></div>
+              <div class="skeleton skeleton-date"></div>
+            </div>
+            <div class="skeleton skeleton-body"></div>
           </div>
-
-          <p class="post__body">{@html post.body}</p>
         </div>
-      </div>
-    {/each}
+      {/each}
+    {:else}
+      {#each currentPagePosts as post}
+        <div id="post-{post.id}" class="post {post.id === highlightedPostId ? 'post--highlighted' : ''}">
+          {#if queryUser || query}
+            <button class="context-jump" onclick={() => gotoContext(post.id)}>Jump</button>
+          {/if}
+          <a href={`https://www.roblox.com/users/${post.poster.user.userId}/profile`} class="post__avatar-container" target="_blank" rel="noopener noreferrer">
+            {#await getAvatar(post.poster.user.userId)}
+              <div class="post__avatar post__avatar--loading"></div>
+            {:then avatarUrl}
+              <img class="post__avatar" src={avatarUrl} alt="">
+            {:catch error}
+              <div class="post__avatar post__avatar--loading"></div>
+            {/await}
+          </a>
+
+          <div class="post__content">
+            <div class="post__user-date-container">
+              <button class="post__user" onclick={() => searchUser(post.poster.user.username)}>
+                { post.poster.user.username }
+              </button>
+              <span class="post__date">
+                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(post.created))}, 
+                {new Date(post.created).getFullYear()} at 
+                {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(post.created))}
+              </span>
+            </div>
+
+            <p class="post__body">{@html post.body}</p>
+          </div>
+        </div>
+      {/each}
+    {/if}
 
     {#if visibleEndIndex < filteredPosts.length}
       <div use:observeBottom class="sentinel"></div>
     {/if}
   {/if}
 
-  {#if showJumpToNewest}
+  {#if showJumpToNewest && !loading}
     <button class="jump-button jump-button--bottom" onclick={jumpToNewest}>Jump To Newest</button>
   {/if}
 </main>
@@ -558,4 +665,39 @@
   .jump-button--bottom {
     bottom: 1rem;
   }
+.post--skeleton {
+  pointer-events: none;
+  opacity: 0.8;
+}
+.skeleton {
+  background: linear-gradient(90deg, #232326 25%, #2d2d2d 37%, #232326 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s linear infinite;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.skeleton-user {
+  width: 120px;
+  height: 18px;
+  margin-bottom: 8px;
+}
+.skeleton-date {
+  width: 90px;
+  height: 14px;
+  margin-bottom: 10px;
+}
+.skeleton-body {
+  width: 100%;
+  height: 25px;
+  margin-bottom: 0;
+}
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
 </style>
