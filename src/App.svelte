@@ -235,7 +235,14 @@
           <button class="clear-button" onclick={() => inputValueUser = ''}>&times;</button>
         {/if}
       </div>
-      <p>Showing {filteredPosts.length.toLocaleString()} posts</p>
+
+      {#if filteredPosts.length === 0}
+        <p>No posts found</p>
+      {:else if filteredPosts.length === 1}
+        <p>Showing one single lonely post</p>
+      {:else}
+        <p>Showing {filteredPosts.length.toLocaleString()} posts</p>
+      {/if}
     </div>
     
 
@@ -362,8 +369,15 @@
 
     &__user-date-container {
       display: flex;
-      flex-direction: row;
-      gap: 10px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+
+      @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+      }
     }
 
     &__user {
@@ -376,6 +390,7 @@
 
     &__date {
       opacity: 0.5;
+      line-height: 1;
     }
 
     &__body {
@@ -404,6 +419,8 @@
 
   .search-container {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
 
@@ -415,9 +432,27 @@
     background: #242424; /* Dark background for sticky header */
   }
 
+  @media (max-width: 768px) {
+    .search-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    
+    .search-container > p {
+      text-align: center;
+      padding: 0;
+
+      @media (min-width: 768px) {
+        padding: 0.5rem 0;
+      }
+    }
+  }
+
   .search-container > .input-wrapper {
     flex-grow: 1;
     position: relative;
+    min-width: 150px; /* Ensure input fields don't get too narrow */
   }
 
   .input-wrapper input {
@@ -486,7 +521,11 @@
   }
 
   .jump-button--top {
-    top: 5rem; /* Below the sticky header */
+    top: 10.5rem; /* Below the sticky header */
+
+    @media (min-width: 768px) {
+      top: 5rem;
+    }
   }
 
   .jump-button--bottom {
