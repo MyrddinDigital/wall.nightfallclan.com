@@ -231,7 +231,6 @@
     visibleEndIndex = postsPerLoad;
     
     // Force immediate scroll to top
-    window.scrollTo({ top: 0 });
     
     // Then update the UI and smooth scroll if needed
     tick().then(() => {
@@ -243,32 +242,20 @@
   }
 
   function jumpToNewest() {
-    // Jump to the end of the currently filtered list
+    // Set the indices to show the last page of posts
     visibleStartIndex = Math.max(0, filteredPosts.length - postsPerLoad);
     visibleEndIndex = filteredPosts.length;
 
-    // First do an immediate scroll to bottom
-    window.scrollTo({ top: document.documentElement.scrollHeight });
-
+    // Wait for Svelte to update the DOM with the new posts
     tick().then(() => {
-      if (filteredPosts.length > 0) {
-        const lastPost = filteredPosts[filteredPosts.length - 1];
-        // A timeout gives the DOM a moment to catch up on large jumps
+        // Now that the DOM is updated, scroll to the bottom.
+        // A small timeout can help ensure everything, including images, has had a chance to render.
         setTimeout(() => {
-          const element = document.getElementById(`post-${lastPost.id}`);
-          if (element) {
-            // Scroll to the element with some extra space at the bottom
-            element.scrollIntoView({ behavior: 'instant', block: 'end' });
-            // Add a small additional scroll to ensure we're at the very bottom
-            setTimeout(() => {
-              window.scrollBy({ top: 100, behavior: 'instant' });
-            }, 0);
-          } else {
-            // Fallback if element not rendered for some reason
-            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
-          }
-        }, 50);
-      }
+            window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 50); // A small delay to let images render
     });
   }
 
