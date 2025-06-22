@@ -412,6 +412,7 @@
   main {
     max-width: 970px;
     width: 85vw;
+    margin-bottom: 50px;
   }
 
   span {
