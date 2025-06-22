@@ -68,7 +68,7 @@
   let showJumpToOldest = $derived(visibleStartIndex > 0);
   let showJumpToNewest = $derived(visibleEndIndex < filteredPosts.length);
 
-  fetch('/data/NFC.json').then(async res => {
+  fetch('https://raw.githubusercontent.com/MerlinSoftworks/rbx-wall-archive/refs/heads/master/public/data/NFC.json').then(async res => {
     posts = await res.json()
   })
 
