@@ -3,10 +3,6 @@
   publish = "dist"
   functions = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "20"
-  NPM_VERSION = "10"
-
 # SPA fallback
 [[redirects]]
   from = "/*"
