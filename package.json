@@ -7,16 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "build:netlify": "npm run build && echo \"Functions build complete\""
   },
   "devDependencies": {
     "@netlify/functions": "^3.1.10",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tsconfig/svelte": "^5.0.4",
-    "@types/node-fetch": "^2.6.12",
-    "node-fetch": "^3.3.2",
     "rollup": "^4.44.0",
-    "sass-embedded": "^1.89.2",
+    "sass": "^1.89.2",
     "svelte": "^5.28.1",
     "svelte-check": "^4.1.6",
     "vite": "^6.3.5"
