@@ -1,6 +1,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -12,9 +13,11 @@
   to = "/index.html"
   status = 200
 
-# Proxy for Roblox thumbnails API
+# Proxy for Roblox API through Netlify function
 [[redirects]]
-  from = "/v1/*"
-  to = "https://thumbnails.roblox.com/v1/:splat"
+  from = "/api/roblox-proxy/*"
+  to = "/.netlify/functions/roblox-proxy/:splat"
   status = 200
   force = true
+
+targetPort=5173

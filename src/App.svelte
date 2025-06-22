@@ -104,7 +104,7 @@
       return avatarCache.get(userId)!;
     }
 
-    const promise = fetch(`/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`)
+    const promise = fetch(`/.netlify/functions/roblox-proxy/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`)
       .then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
