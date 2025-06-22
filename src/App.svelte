@@ -247,6 +247,9 @@
     visibleStartIndex = Math.max(0, filteredPosts.length - postsPerLoad);
     visibleEndIndex = filteredPosts.length;
 
+    // First do an immediate scroll to bottom
+    window.scrollTo({ top: document.documentElement.scrollHeight });
+
     tick().then(() => {
       if (filteredPosts.length > 0) {
         const lastPost = filteredPosts[filteredPosts.length - 1];
@@ -254,7 +257,12 @@
         setTimeout(() => {
           const element = document.getElementById(`post-${lastPost.id}`);
           if (element) {
+            // Scroll to the element with some extra space at the bottom
             element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            // Add a small additional scroll to ensure we're at the very bottom
+            setTimeout(() => {
+              window.scrollBy({ top: 100, behavior: 'smooth' });
+            }, 100);
           } else {
             // Fallback if element not rendered for some reason
             window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
