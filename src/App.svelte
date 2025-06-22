@@ -224,15 +224,23 @@
   {#if posts}
     <div class="search-container">
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValue} placeholder="Search posts" />
+        <input type="text" bind:value={inputValue} placeholder="Search posts" id="search-posts" />
         {#if inputValue}
-          <button class="clear-button" onclick={() => inputValue = ''}>&times;</button>
+          <button class="clear-button" onclick={(e) => {
+            e.preventDefault();
+            inputValue = '';
+            document.getElementById('search-posts')?.focus();
+          }}>&times;</button>
         {/if}
       </div>
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValueUser} placeholder="Search users" />
+        <input type="text" bind:value={inputValueUser} placeholder="Search users" id="search-users" />
         {#if inputValueUser}
-          <button class="clear-button" onclick={() => inputValueUser = ''}>&times;</button>
+          <button class="clear-button" onclick={(e) => {
+            e.preventDefault();
+            inputValueUser = '';
+            document.getElementById('search-users')?.focus();
+          }}>&times;</button>
         {/if}
       </div>
 
@@ -271,7 +279,11 @@
             <button class="post__user" onclick={() => searchUser(post.poster.user.username)}>
               { post.poster.user.username }
             </button>
-            <span class="post__date">{new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: '2-digit', hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(post.created))}</span>
+            <span class="post__date">
+              {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(post.created))}, 
+              {new Date(post.created).getFullYear()} at 
+              {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(post.created))}
+            </span>
           </div>
 
           <p class="post__body">{@html post.body}</p>
@@ -335,11 +347,11 @@
     position: relative;
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
-    gap: 10px;
+    gap: 15px;
     margin-bottom: 20px;
-    background-color: #2b2b2b;
+    background-color: #191a1f;
     padding: 15px;
     border-radius: 10px;
     transition: all 0.2s ease;
@@ -359,12 +371,14 @@
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      background-color: #464646;
+      background-color: #2d2d2d;
+      border: 2px solid #1d1d1d;
     }
 
     &__content {
       display: flex;
       flex-direction: column;
+      width: calc(100% - 60px);
     }
 
     &__user-date-container {
@@ -386,16 +400,27 @@
       border: none;
       padding: 0;
       margin: 0;
+      color: #8183ec;
+      font-weight: 600;
+      transition: color 0.2s ease;
+      
+      &:hover {
+        text-decoration: dotted underline;
+        text-underline-offset: 2px;
+        text-decoration-thickness: 2px;
+        text-decoration-color: #8183ec;
+      }
     }
 
     &__date {
-      opacity: 0.5;
+      color: #94a3b8;
       line-height: 1;
     }
 
     &__body {
       margin: 0;
       text-align: left;
+      overflow-wrap: break-word;
     }
   }
 
@@ -429,7 +454,7 @@
     z-index: 10;
     
     padding: 1rem;
-    background: #242424; /* Dark background for sticky header */
+    background: #121215; /* Dark background for sticky header */
   }
 
   @media (max-width: 768px) {
@@ -459,15 +484,17 @@
     width: 100%;
     padding: 10px;
     padding-right: 2rem; /* Make space for the button */
-    border: 2px solid #2b2b2b;
     border-radius: 5px;
-    background: #2b2b2b;
+    background: #232326;
     color: #fff;
     box-sizing: border-box;
+    transition: all 0.2s ease-out;
+    border: none;
 
     &:focus {
       outline: none;
-      border-color: #fff;
+      background-color: #fff;
+      color: #121215;
     }
   }
 
@@ -476,7 +503,7 @@
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    background: #565656;
+    background: #475569;
     color: #ddd;
     border: none;
     border-radius: 50%;
@@ -494,7 +521,7 @@
   }
 
   .clear-button:hover {
-    background-color: #999;
+    background-color: #846cff;
     color: white;
   }
 
