@@ -508,7 +508,7 @@
     font-weight: bold;
 
     position: fixed;
-    left: 50%;
+    margin: 0 auto;
     transform: translateX(-50%);
     z-index: 20;
 
