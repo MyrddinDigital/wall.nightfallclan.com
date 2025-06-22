@@ -457,7 +457,7 @@
     align-items: flex-start;
     justify-content: flex-start;
     gap: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     background-color: #191a1f;
     padding: 15px;
     border-radius: 10px;
@@ -678,7 +678,7 @@
 }
 .skeleton-user {
   width: 120px;
-  height: 18px;
+  height: 16px;
   margin-bottom: 8px;
 }
 .skeleton-date {
@@ -688,7 +688,7 @@
 }
 .skeleton-body {
   width: 100%;
-  height: 25px;
+  height: 24px;
   margin-bottom: 0;
 }
 @keyframes shimmer {
