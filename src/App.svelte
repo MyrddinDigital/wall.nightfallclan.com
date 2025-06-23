@@ -418,7 +418,7 @@
 
   function handleScroll() {
     const currentScrollY = window.scrollY;
-    scrolled = currentScrollY > 20;
+    scrolled = currentScrollY > 60;
     if (currentScrollY <= 0) {
       // Reset at the top
       lastScrollY = 0;
@@ -477,6 +477,17 @@
 </script>
 
 <svelte:window on:scroll={handleScroll} />
+
+<div class="nav-links">
+  <a class="nav-link"href="https://nightfallclan.com">
+    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+    History
+  </a>
+  <div class="nav-link nav-link--current">
+    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
+    Wall
+  </div>
+</div>
 
 <div class="search-container" class:scrolled={scrolled && !loading}>
   <div class="input-wrapper">
@@ -669,7 +680,7 @@
       border: none;
       padding: 0;
       margin: 0;
-      color: #4f7bff;
+      color: rgb(108, 149, 255);
       font-size: 14px;
       font-weight: 600;
       transition: color 0.2s ease;
@@ -713,72 +724,6 @@
     height: 1px;
   }
 
-  .search-container {
-    display: flex;
-    width: 100%;
-    padding: 1rem 0;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  
-    background: #121215; /* Dark background for sticky header */
-  }
-
-  .search-container.scrolled {
-    box-shadow: 0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12),0 2px 4px -1px rgba(0,0,0,.2);
-    transition: box-shadow 0.2s ease-in-out;
-  }
-
-  @media (max-width: 768px) {
-    .search-container {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.75rem;
-    }
-    
-    .search-container > p {
-      text-align: center;
-      padding: 0;
-
-      @media (min-width: 768px) {
-        padding: 0.5rem 0;
-      }
-    }
-  }
-
-  .search-container > .input-wrapper {
-    flex-grow: 1;
-    position: relative;
-    min-width: 150px; /* Ensure input fields don't get too narrow */
-    width: 90%;
-    max-width: 700px;
-    margin: 0 auto;
-  }
-
-  .input-wrapper input {
-    width: 100%;
-    padding: 10px;
-    padding-right: 2rem; /* Make space for the button */
-    border-radius: 5px;
-    background: #232326;
-    color: #fff;
-    box-sizing: border-box;
-    transition: all 0.2s ease-out;
-    border: none;
-    font-size: 16px;
-
-    &:focus {
-      outline: none;
-      background-color: #fff;
-      color: #121215;
-    }
-  }
-
   .post-count p {
     margin-top: 0;
   }
@@ -806,7 +751,7 @@
   }
 
   .clear-button:hover {
-    background-color: #846cff;
+    background-color: rgb(108, 149, 255);
     color: white;
   }
 
@@ -906,7 +851,115 @@
     transition: color 0.2s ease;
   }
 
+  .search-container {
+    display: flex;
+    width: 100%;
+    padding: 0.6rem 0 1rem 0;
+    flex-direction: row;
+    align-items: center;
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  
+    background: #121214; /* Dark background for sticky header */
+
+    gap: 20px;
+    flex-wrap: nowrap;
+  }
+
+  .search-container.scrolled {
+    box-shadow: 0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12),0 2px 4px -1px rgba(0,0,0,.2);
+    transition: box-shadow 0.2s ease-in-out;
+  }
+
+  @media (max-width: 768px) {
+    .search-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    
+    .search-container > p {
+      text-align: center;
+      padding: 0;
+
+      @media (min-width: 768px) {
+        padding: 0.5rem 0;
+      }
+    }
+  }
+
+  .search-container > .input-wrapper {
+    flex-grow: 1;
+    position: relative;
+    min-width: 150px; /* Ensure input fields don't get too narrow */
+    max-width: 700px;
+    margin: 0 auto;
+    width: 90%;
+  }
+
+  .input-wrapper input {
+    width: 100%;
+    padding: 10px;
+    padding-right: 2rem; /* Make space for the button */
+    border-radius: 5px;
+    background: #232326;
+    color: #fff;
+    box-sizing: border-box;
+    transition: all 0.2s ease-out;
+    border: none;
+    font-size: 16px;
+
+    &:focus {
+      outline: none;
+      background-color: #fff;
+      color: #121214;
+    }
+  }
   .input-wrapper:has(input:focus) .search-icon {
-    color: #121215;
+    color: #121214;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 10px;
+    padding-top: 10px;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+
+    @media (min-width: 1360px) {
+      position: fixed;
+      left: 50px;
+      top: 8px;
+      z-index: 15;
+    }
+  }
+
+  .nav-link {
+    padding: 5px 20px 7px;
+    border-radius: 9999px;
+    transition: all 0.2s ease-out;
+    color: #fff;
+
+    &:hover {
+      background-color: #070708;
+      color: #fff;
+    }
+  }
+
+  .nav-link--current {
+    background-color: #070708;
+    color: #fff;
+  }
+
+  .nav-icon {
+    width: 16px;
+    height: 16px;
+    position: relative;
+    top: 3px;
+    right: 1px;
+    color: #797979;
   }
 </style>
