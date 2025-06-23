@@ -482,6 +482,7 @@
   {#if posts}
     <div class="search-container">
       <div class="input-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         <input type="text" bind:value={inputValue} placeholder="Search" id="search-posts" />
         {#if inputValue}
           <button class="clear-button" onclick={async (e) => {
@@ -624,7 +625,7 @@
     margin-bottom: 10px;
     background-color: #191a1f;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 8px;
     transition: all 0.2s ease;
 
     &--highlighted {
@@ -876,4 +877,25 @@
   }
 }
 
+  .input-wrapper {
+    position: relative;
+  }
+
+  #search-posts {
+    padding-left: 40px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #cdcdcd;
+    pointer-events: none;
+    transition: color 0.2s ease;
+  }
+
+  .input-wrapper:has(input:focus) .search-icon {
+    color: #121215;
+  }
 </style>
