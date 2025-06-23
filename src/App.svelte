@@ -153,24 +153,76 @@
     }, 100);
   }
 
+  /**
+   * Escape HTML special characters to avoid accidental tag injection.
+   */
+  function escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  /**
+   * Convert raw post objects into SanitizedPosts with:
+   * 1. Guaranteed poster property
+   * 2. Body converted to safe HTML where URLs are linkified
+   *    and Roblox forum links are redirected to archive.froast.io
+   */
   function sanitizePosts(posts: Posts): SanitizedPosts {
-    const sanitizedPosts: SanitizedPosts = []
+    const urlRegex = /https?:\/\/[^\s<]+/g;
 
-    posts.forEach(post => {
-      sanitizedPosts.push({
-        ...post,
-        poster: post.poster || {
-          user: {
-            userId: 1,
-            username: 'Banned User',
-            displayName: 'Banned User'
-          }
+    return posts.map(post => {
+      // Ensure we always have a poster object
+      const safePoster: Poster = post.poster ?? {
+        user: {
+          userId: 1,
+          username: 'Banned User',
+          displayName: 'Banned User'
         }
-      })
-      // post.body = post.body.linkify()
-    })
+      };
 
-    return sanitizedPosts
+      const raw = post.body ?? '';
+      let result = '';
+      let lastIndex = 0;
+
+      raw.replace(urlRegex, (match, offset) => {
+        // Append the text before this URL, escaped
+        result += escapeHtml(raw.slice(lastIndex, offset));
+
+        // Strip trailing punctuation from the detected URL so it is not part of the link
+        const trailingPunct = /[.,!?)]+$/.exec(match);
+        const cleanUrl = trailingPunct ? match.slice(0, -trailingPunct[0].length) : match;
+        const trailing = trailingPunct ? trailingPunct[0] : '';
+
+        // Determine final href (handle legacy Roblox forum links)
+        let href = cleanUrl;
+        try {
+          const u = new URL(cleanUrl);
+          if (u.hostname.endsWith('roblox.com') && u.pathname === '/Forum/ShowPost.aspx') {
+            const id = u.searchParams.get('PostID');
+            if (id) href = `https://archive.froast.io/forum/${id}`;
+          }
+        } catch {
+          /* ignore malformed urls */
+        }
+
+        // Append the anchor tag
+        result += `<a href="${href}" target="_blank" rel="noopener noreferrer">${escapeHtml(cleanUrl)}</a>${escapeHtml(trailing)}`;
+
+        lastIndex = offset + match.length;
+        return match;
+      });
+
+      // Append remaining text
+      result += escapeHtml(raw.slice(lastIndex));
+
+      return {
+        ...post,
+        poster: safePoster,
+        body: result
+      } as SanitizedPost;
+    });
   }
 
   const avatarCache = new Map<number, Promise<string>>();
@@ -539,7 +591,7 @@
   .post__avatar--loading {
     background: linear-gradient(to right, #3c3c3c 8%, #444444 18%, #3c3c3c 33%);
     background-size: 200% 100%;
-    animation: shimmer 1.5s linear infinite;
+    animation: shimmer 4s linear infinite;
   }
   .sentinel {
     height: 1px;
