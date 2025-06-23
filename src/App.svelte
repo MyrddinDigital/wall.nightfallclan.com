@@ -414,9 +414,11 @@
 
   let lastScrollY = 0;
   let scrollDirection = $state<'up' | 'down' | null>(null);
+  let scrolled = $state(false);
 
   function handleScroll() {
     const currentScrollY = window.scrollY;
+    scrolled = currentScrollY > 20;
     if (currentScrollY <= 0) {
       // Reset at the top
       lastScrollY = 0;
@@ -475,29 +477,30 @@
 </script>
 
 <svelte:window on:scroll={handleScroll} />
+
+<div class="search-container" class:scrolled>
+  <div class="input-wrapper">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    <input type="text" bind:value={inputValue} placeholder="Search" id="search-posts" />
+    {#if inputValue}
+      <button class="clear-button" onclick={async (e) => {
+        e.preventDefault();
+        inputValue = '';
+        loading = true;
+        await tick();
+        window.scrollTo(0, 0);
+        setTimeout(() => loading = false, 100);
+        document.getElementById('search-posts')?.focus();
+      }}>&times;</button>
+    {/if}
+  </div>
+</div>
+
 <main>
   {#if showJumpToOldest && !loading}
     <button class="jump-button jump-button--top" class:hidden={scrollDirection === 'down'} onclick={jumpToOldest}>Jump To Oldest</button>
   {/if}
   {#if posts}
-    <div class="search-container">
-      <div class="input-wrapper">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" bind:value={inputValue} placeholder="Search" id="search-posts" />
-        {#if inputValue}
-          <button class="clear-button" onclick={async (e) => {
-            e.preventDefault();
-            inputValue = '';
-            loading = true;
-            await tick();
-            window.scrollTo(0, 0);
-            setTimeout(() => loading = false, 100);
-            document.getElementById('search-posts')?.focus();
-          }}>&times;</button>
-        {/if}
-      </div>
-    </div>
-
     <div class="post-count">
       {#if loading}
         <p>Loading</p>
@@ -578,16 +581,9 @@
     margin-bottom: 50px;
   }
 
-  span {
-    font-size: 0.85rem;
-    opacity: 0.5;
-  }
-
   button {
     margin: 0 10px;
   }
-
-
 
   .context-jump {
     font-family: Helvetica, Arial, sans-serif;
@@ -673,17 +669,20 @@
       border: none;
       padding: 0;
       margin: 0;
-      color: #ffffff;
+      color: #4f7bff;
       font-size: 14px;
       font-weight: 600;
       transition: color 0.2s ease;
     }
 
     &__date {
-      color: #94a3b8;
+      color: #ffffff;
       line-height: 1;
       font-size: 12px;
       font-weight: 600;
+      opacity: 0.7;
+      position: relative;
+      top: 1px;
     }
 
     &__body {
@@ -713,6 +712,8 @@
 
   .search-container {
     display: flex;
+    width: 100%;
+    padding: 1rem 0;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 1rem;
@@ -721,9 +722,13 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    
-    padding: 1rem;
+  
     background: #121215; /* Dark background for sticky header */
+    transition: box-shadow 0.2s ease-in-out;
+  }
+
+  .search-container.scrolled {
+    box-shadow: 0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12),0 2px 4px -1px rgba(0,0,0,.2);
   }
 
   @media (max-width: 768px) {
@@ -747,6 +752,9 @@
     flex-grow: 1;
     position: relative;
     min-width: 150px; /* Ensure input fields don't get too narrow */
+    width: 90%;
+    max-width: 700px;
+    margin: 0 auto;
   }
 
   .input-wrapper input {
