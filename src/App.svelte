@@ -529,7 +529,7 @@
     {:else}
       {#each currentPagePosts as post}
         <div id="post-{post.id}" class="post {post.id === highlightedPostId ? 'post--highlighted' : ''}">
-          {#if queryUser || query}
+          {#if queryUser || query || dateFilter}
             <button class="context-jump" onclick={() => gotoContext(post.id)}>Jump</button>
           {/if}
           <a href={`https://www.roblox.com/users/${post.poster.user.userId}/profile`} class="post__avatar-container" target="_blank" rel="noopener noreferrer">
