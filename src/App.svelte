@@ -478,7 +478,7 @@
 
 <svelte:window on:scroll={handleScroll} />
 
-<div class="search-container" class:scrolled>
+<div class="search-container" class:scrolled={scrolled && !loading}>
   <div class="input-wrapper">
     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     <input type="text" bind:value={inputValue} placeholder="Search" id="search-posts" />
@@ -727,11 +727,11 @@
     z-index: 10;
   
     background: #121215; /* Dark background for sticky header */
-    transition: box-shadow 0.2s ease-in-out;
   }
 
   .search-container.scrolled {
     box-shadow: 0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12),0 2px 4px -1px rgba(0,0,0,.2);
+    transition: box-shadow 0.2s ease-in-out;
   }
 
   @media (max-width: 768px) {
