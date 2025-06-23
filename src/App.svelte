@@ -30,7 +30,7 @@
   let inputValue = $state('')
 
   let queryUser = $state('')
-  let inputValueUser = $state('')
+
 
   let highlightedPostId = $state(0)
 
@@ -49,32 +49,40 @@
   });
 
   $effect(() => {
-    // Reading inputValue here establishes a dependency, so this effect re-runs
     const value = inputValue;
-    const valueUser = inputValueUser;
     
-    // Only debounce if the values are changing due to user input, not programmatic changes
     const isUserInput = document.activeElement?.tagName === 'INPUT';
     const delay = isUserInput ? 300 : 0;
+
+    const fromUserRegex = /\s*from:\s*(\S+)\s*/i;
+    const match = value.match(fromUserRegex);
+    
+    let newQueryUser = '';
+    let newQuery = value;
+
+    if (match) {
+      newQueryUser = match[1];
+      newQuery = value.replace(fromUserRegex, '').trim();
+    }
     
     // Set loading state when search values change
-    if (value !== query || valueUser !== queryUser) {
+    if (newQuery !== query || newQueryUser !== queryUser) {
       loading = true;
     }
     
     const timeout = setTimeout(async () => {
       // Only update if values have changed
-      if (value !== query || valueUser !== queryUser) {
+      if (newQuery !== query || newQueryUser !== queryUser) {
         // Always reset pagination when search changes
         visibleStartIndex = 0;
         visibleEndIndex = postsPerLoad;
         
         // Update the query values
-        query = value;
-        queryUser = valueUser;
+        query = newQuery;
+        queryUser = newQueryUser;
         
         // Scroll to top when there's an active search
-        if (value || valueUser) {
+        if (query || queryUser) {
           window.scrollTo(0, 0);
         }
         
@@ -141,8 +149,15 @@
     
     // Update the search values in the next microtask
     await Promise.resolve();
-    inputValueUser = username;
-    queryUser = username;
+
+    const fromUserRegex = /\s*from:\s*(\S+)\s*/i;
+    const fromUserString = `from:${username}`;
+
+    if (inputValue.match(fromUserRegex)) {
+      inputValue = inputValue.replace(fromUserRegex, ` ${fromUserString} `).trim();
+    } else {
+      inputValue = `${inputValue} ${fromUserString}`.trim();
+    }
     
     // Scroll to top instantly when clicking a username
     window.scrollTo(0, 0);
@@ -311,10 +326,34 @@
     });
   }
 
+  let lastScrollY = 0;
+  let scrollDirection = $state<'up' | 'down' | null>(null);
+
+  function handleScroll() {
+    const currentScrollY = window.scrollY;
+    if (currentScrollY <= 0) {
+      // Reset at the top
+      lastScrollY = 0;
+      scrollDirection = null;
+      return;
+    }
+
+    // Add a small threshold to prevent firing on minor scrolls
+    if (Math.abs(currentScrollY - lastScrollY) < 10) {
+      return;
+    }
+
+    if (currentScrollY > lastScrollY) {
+      scrollDirection = 'down';
+    } else if (currentScrollY < lastScrollY) {
+      scrollDirection = 'up';
+    }
+    lastScrollY = currentScrollY;
+  }
+
   function gotoContext(id: number) {
     // Clear all filters immediately to ensure the target post will be in the list
     inputValue = '';
-    inputValueUser = '';
     query = '';
     queryUser = '';
 
@@ -348,14 +387,15 @@
   }
 </script>
 
+<svelte:window on:scroll={handleScroll} />
 <main>
   {#if showJumpToOldest && !loading}
-    <button class="jump-button jump-button--top" onclick={jumpToOldest}>Jump To Oldest</button>
+    <button class="jump-button jump-button--top" class:hidden={scrollDirection === 'down'} onclick={jumpToOldest}>Jump To Oldest</button>
   {/if}
   {#if posts}
     <div class="search-container">
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValue} placeholder="Search posts" id="search-posts" />
+        <input type="text" bind:value={inputValue} placeholder="Search" id="search-posts" />
         {#if inputValue}
           <button class="clear-button" onclick={async (e) => {
             e.preventDefault();
@@ -368,21 +408,9 @@
           }}>&times;</button>
         {/if}
       </div>
-      <div class="input-wrapper">
-        <input type="text" bind:value={inputValueUser} placeholder="Search users" id="search-users" />
-        {#if inputValueUser}
-          <button class="clear-button" onclick={async (e) => {
-            e.preventDefault();
-            inputValueUser = '';
-            loading = true;
-            await tick();
-            window.scrollTo(0, 0);
-            setTimeout(() => loading = false, 100);
-            document.getElementById('search-users')?.focus();
-          }}>&times;</button>
-        {/if}
-      </div>
+    </div>
 
+    <div class="post-count">
       {#if loading}
         <p>Loading</p>
       {:else if filteredPosts.length === 0}
@@ -393,8 +421,6 @@
         <p>Showing {filteredPosts.length.toLocaleString()} posts</p>
       {/if}
     </div>
-    
-
 
     {#if visibleStartIndex > 0}
       <div use:observeTop class="sentinel"></div>
@@ -453,7 +479,7 @@
   {/if}
 
   {#if showJumpToNewest && !loading}
-    <button class="jump-button jump-button--bottom" onclick={jumpToNewest}>Jump To Newest</button>
+    <button class="jump-button jump-button--bottom" class:hidden={scrollDirection === 'up'} onclick={jumpToNewest}>Jump To Newest</button>
   {/if}
 </main>
 
@@ -543,7 +569,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 5px;
+      gap: 7px;
       margin-bottom: 5px;
 
       @media (min-width: 768px) {
@@ -559,17 +585,10 @@
       border: none;
       padding: 0;
       margin: 0;
-      color: #8183ec;
+      color: #ffffff;
       font-size: 14px;
       font-weight: 600;
       transition: color 0.2s ease;
-      
-      &:hover {
-        text-decoration: dotted underline;
-        text-underline-offset: 2px;
-        text-decoration-thickness: 2px;
-        text-decoration-color: #8183ec;
-      }
     }
 
     &__date {
@@ -652,12 +671,17 @@
     box-sizing: border-box;
     transition: all 0.2s ease-out;
     border: none;
+    font-size: 16px;
 
     &:focus {
       outline: none;
       background-color: #fff;
       color: #121215;
     }
+  }
+
+  .post-count p {
+    margin-top: 0;
   }
 
   .clear-button {
@@ -699,7 +723,7 @@
     position: fixed;
     margin: 0 auto;
     transform: translateX(-50%);
-    z-index: 20;
+    z-index: 5;
 
     background-color: white;
     color: #1e1e1e;
@@ -707,18 +731,28 @@
     border-radius: 9999px; /* pill shape */
     padding: 0.5rem 1rem;
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
+
+    &.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
   }
 
   .jump-button--top {
-    top: 10.5rem; /* Below the sticky header */
+    top: 5rem;
 
-    @media (min-width: 768px) {
-      top: 5rem;
+    &.hidden {
+      transform: translateX(-50%) translateY(-200%);
     }
   }
 
   .jump-button--bottom {
     bottom: 1rem;
+
+    &.hidden {
+      transform: translateX(-50%) translateY(200%);
+    }
   }
 .post--skeleton {
   pointer-events: none;
