@@ -105,7 +105,7 @@
 
     let newQuery = value;
     let newQueryUser = '';
-    let newDateFilter: { start?: number, end?: number } | null = null;
+    let newDateFilter: { start?: number, end?: number } = {};
 
     const fromMatch = newQuery.match(fromUserRegex);
     if (fromMatch) {
@@ -115,30 +115,36 @@
 
     const beforeMatch = newQuery.match(beforeDateRegex);
     if (beforeMatch) {
-      newDateFilter = getDateFilter('before', beforeMatch[1]);
+      const filter = getDateFilter('before', beforeMatch[1]);
+      if (filter?.end) newDateFilter.end = filter.end;
       newQuery = newQuery.replace(beforeDateRegex, '').trim();
     }
 
     const afterMatch = newQuery.match(afterDateRegex);
-    if (afterMatch && !newDateFilter) {
-      newDateFilter = getDateFilter('after', afterMatch[1]);
+    if (afterMatch) {
+      const filter = getDateFilter('after', afterMatch[1]);
+      if (filter?.start) newDateFilter.start = filter.start;
       newQuery = newQuery.replace(afterDateRegex, '').trim();
     }
 
+    // `during` will override any before/after filters
     const duringMatch = newQuery.match(duringDateRegex);
-    if (duringMatch && !newDateFilter) {
-      newDateFilter = getDateFilter('during', duringMatch[1]);
+    if (duringMatch) {
+      const filter = getDateFilter('during', duringMatch[1]);
+      if (filter) newDateFilter = filter;
       newQuery = newQuery.replace(duringDateRegex, '').trim();
     }
     
+    const finalFilter = Object.keys(newDateFilter).length > 0 ? newDateFilter : null;
+
     // Set loading state when search values change
-    if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(newDateFilter) !== JSON.stringify(dateFilter)) {
+    if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(finalFilter) !== JSON.stringify(dateFilter)) {
       loading = true;
     }
     
     const timeout = setTimeout(async () => {
       // Only update if values have changed
-      if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(newDateFilter) !== JSON.stringify(dateFilter)) {
+      if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(finalFilter) !== JSON.stringify(dateFilter)) {
         // Always reset pagination when search changes
         visibleStartIndex = 0;
         visibleEndIndex = postsPerLoad;
@@ -146,7 +152,7 @@
         // Update the query values
         query = newQuery;
         queryUser = newQueryUser;
-        dateFilter = newDateFilter;
+        dateFilter = finalFilter;
         
         // Scroll to top when there's an active search
         if (query || queryUser || dateFilter) {
