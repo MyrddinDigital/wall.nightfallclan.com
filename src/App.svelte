@@ -942,6 +942,7 @@
     border-radius: 9999px;
     transition: all 0.2s ease-out;
     color: #fff;
+    white-space: nowrap;
 
     &:hover {
       background-color: #070708;
