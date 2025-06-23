@@ -80,8 +80,8 @@
         
         // Small delay to ensure loading state is shown
         await new Promise(resolve => setTimeout(resolve, 50));
-        loading = false;
       }
+      loading = false;
     }, delay);
     
     return () => {
@@ -355,7 +355,7 @@
   {#if posts}
     <div class="search-container">
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValue} placeholder="Search posts" id="search-posts" oninput={() => { loading = true; setTimeout(() => loading = false, 500); }} />
+        <input type="text" bind:value={inputValue} placeholder="Search posts" id="search-posts" />
         {#if inputValue}
           <button class="clear-button" onclick={async (e) => {
             e.preventDefault();
@@ -369,7 +369,7 @@
         {/if}
       </div>
       <div class="input-wrapper">
-        <input type="text" bind:value={inputValueUser} placeholder="Search users" id="search-users" oninput={() => { loading = true; setTimeout(() => loading = false, 500); }} />
+        <input type="text" bind:value={inputValueUser} placeholder="Search users" id="search-users" />
         {#if inputValueUser}
           <button class="clear-button" onclick={async (e) => {
             e.preventDefault();
@@ -383,7 +383,9 @@
         {/if}
       </div>
 
-      {#if filteredPosts.length === 0}
+      {#if loading}
+        <p>Loading</p>
+      {:else if filteredPosts.length === 0}
         <p>No posts found</p>
       {:else if filteredPosts.length === 1}
         <p>Showing one single lonely post</p>
@@ -499,6 +501,7 @@
     
 
   .post {
+    font-family: 'Helvetica Neue', Helvetica, Arial, Lucida Grande, sans-serif;
     position: relative;
     display: flex;
     flex-direction: row;
@@ -540,7 +543,8 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 3px;
+      gap: 5px;
+      margin-bottom: 5px;
 
       @media (min-width: 768px) {
         flex-direction: row;
@@ -556,6 +560,7 @@
       padding: 0;
       margin: 0;
       color: #8183ec;
+      font-size: 14px;
       font-weight: 600;
       transition: color 0.2s ease;
       
@@ -570,6 +575,8 @@
     &__date {
       color: #94a3b8;
       line-height: 1;
+      font-size: 12px;
+      font-weight: 600;
     }
 
     &__body {
