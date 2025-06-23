@@ -502,7 +502,7 @@
   {/if}
   {#if posts}
     <div class="post-count">
-      {#if loading}
+      {#if loading || posts.length === 0}
         <p>Loading</p>
       {:else if filteredPosts.length === 0}
         <p>No posts found</p>
@@ -517,7 +517,7 @@
       <div use:observeTop class="sentinel"></div>
     {/if}
 
-    {#if loading}
+    {#if loading || posts.length === 0}
       {#each Array(SKELETON_COUNT) as _, i}
         <div class="post post--skeleton">
           <div class="post__avatar post__avatar--loading"></div>
@@ -678,11 +678,14 @@
     &__date {
       color: #ffffff;
       line-height: 1;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
       opacity: 0.7;
       position: relative;
-      top: 1px;
+      top: 2px;
+
+      @media (max-width: 768px) {
+        top: 0;
+      }
     }
 
     &__body {
