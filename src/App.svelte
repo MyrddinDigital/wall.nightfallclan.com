@@ -862,7 +862,7 @@
     top: 0;
     z-index: 10;
   
-    background: #121214; /* Dark background for sticky header */
+    background: #121215; /* Dark background for sticky header */
 
     gap: 20px;
     flex-wrap: nowrap;
@@ -914,11 +914,11 @@
     &:focus {
       outline: none;
       background-color: #fff;
-      color: #121214;
+      color: #121215;
     }
   }
   .input-wrapper:has(input:focus) .search-icon {
-    color: #121214;
+    color: #121215;
   }
 
   .nav-links {
