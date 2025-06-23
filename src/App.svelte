@@ -31,6 +31,8 @@
 
   let queryUser = $state('')
 
+  let dateFilter = $state<{ start?: number, end?: number } | null>(null)
+
 
   let highlightedPostId = $state(0)
 
@@ -48,6 +50,48 @@
     };
   });
 
+  function getDateFilter(operator: 'before' | 'after' | 'during', dateStr: string): { start?: number, end?: number } | null {
+    // Replace hyphens with slashes to encourage local time parsing for YYYY-MM-DD formats
+    const localDateStr = dateStr.replace(/-/g, '/');
+    const parts = localDateStr.split('/');
+
+    if (parts.length === 1 && /^\d{4}$/.test(parts[0])) { // YYYY
+      const year = parseInt(parts[0], 10);
+      const startDate = new Date(year, 0, 1).getTime();
+      const endDate = new Date(year + 1, 0, 1).getTime();
+      if (operator === 'before') return { end: startDate };
+      if (operator === 'after') return { start: endDate };
+      if (operator === 'during') return { start: startDate, end: endDate };
+    } else if (parts.length === 2 && /^\d{4}$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1])) { // YYYY/MM
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      if (month < 1 || month > 12) return null;
+      const startDate = new Date(year, month - 1, 1).getTime();
+      const nextMonth = new Date(year, month - 1, 1);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      const endDate = nextMonth.getTime();
+      if (operator === 'before') return { end: startDate };
+      if (operator === 'after') return { start: endDate };
+      if (operator === 'during') return { start: startDate, end: endDate };
+    } else { // YYYY/MM/DD or other parsable format
+      const parsedDate = new Date(localDateStr);
+      if (isNaN(parsedDate.getTime())) return null;
+
+      // Set time to beginning of the day in local timezone
+      parsedDate.setHours(0, 0, 0, 0);
+      const startDate = parsedDate.getTime();
+      
+      const nextDay = new Date(parsedDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const endDate = nextDay.getTime();
+
+      if (operator === 'before') return { end: startDate };
+      if (operator === 'after') return { start: endDate };
+      if (operator === 'during') return { start: startDate, end: endDate };
+    }
+    return null;
+  }
+
   $effect(() => {
     const value = inputValue;
     
@@ -55,24 +99,46 @@
     const delay = isUserInput ? 300 : 0;
 
     const fromUserRegex = /\s*from:\s*(\S+)\s*/i;
-    const match = value.match(fromUserRegex);
-    
-    let newQueryUser = '';
-    let newQuery = value;
+    const beforeDateRegex = /\s*before:\s*(\S+)\s*/i;
+    const afterDateRegex = /\s*after:\s*(\S+)\s*/i;
+    const duringDateRegex = /\s*during:\s*(\S+)\s*/i;
 
-    if (match) {
-      newQueryUser = match[1];
-      newQuery = value.replace(fromUserRegex, '').trim();
+    let newQuery = value;
+    let newQueryUser = '';
+    let newDateFilter: { start?: number, end?: number } | null = null;
+
+    const fromMatch = newQuery.match(fromUserRegex);
+    if (fromMatch) {
+      newQueryUser = fromMatch[1];
+      newQuery = newQuery.replace(fromUserRegex, '').trim();
+    }
+
+    const beforeMatch = newQuery.match(beforeDateRegex);
+    if (beforeMatch) {
+      newDateFilter = getDateFilter('before', beforeMatch[1]);
+      newQuery = newQuery.replace(beforeDateRegex, '').trim();
+    }
+
+    const afterMatch = newQuery.match(afterDateRegex);
+    if (afterMatch && !newDateFilter) {
+      newDateFilter = getDateFilter('after', afterMatch[1]);
+      newQuery = newQuery.replace(afterDateRegex, '').trim();
+    }
+
+    const duringMatch = newQuery.match(duringDateRegex);
+    if (duringMatch && !newDateFilter) {
+      newDateFilter = getDateFilter('during', duringMatch[1]);
+      newQuery = newQuery.replace(duringDateRegex, '').trim();
     }
     
     // Set loading state when search values change
-    if (newQuery !== query || newQueryUser !== queryUser) {
+    if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(newDateFilter) !== JSON.stringify(dateFilter)) {
       loading = true;
     }
     
     const timeout = setTimeout(async () => {
       // Only update if values have changed
-      if (newQuery !== query || newQueryUser !== queryUser) {
+      if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(newDateFilter) !== JSON.stringify(dateFilter)) {
         // Always reset pagination when search changes
         visibleStartIndex = 0;
         visibleEndIndex = postsPerLoad;
@@ -80,9 +146,10 @@
         // Update the query values
         query = newQuery;
         queryUser = newQueryUser;
+        dateFilter = newDateFilter;
         
         // Scroll to top when there's an active search
-        if (query || queryUser) {
+        if (query || queryUser || dateFilter) {
           window.scrollTo(0, 0);
         }
         
@@ -116,6 +183,19 @@
       result = result.filter(post => 
         post.poster?.user.username.toLowerCase().includes(queryUser.toLowerCase())
       );
+    }
+
+    const currentFilter = dateFilter;
+    if (currentFilter) {
+      result = result.filter(post => {
+        const postTimestamp = new Date(post.created).getTime();
+        if (isNaN(postTimestamp)) return false;
+
+        if (currentFilter.start && postTimestamp < currentFilter.start) return false;
+        if (currentFilter.end && postTimestamp >= currentFilter.end) return false;
+        
+        return true;
+      });
     }
     
     if (query) {
@@ -356,6 +436,7 @@
     inputValue = '';
     query = '';
     queryUser = '';
+    dateFilter = null;
 
     const postIndex = posts.findIndex(post => post.id === id);
     if (postIndex === -1) return;
