@@ -587,7 +587,7 @@
 
 <style lang="scss">
   main {
-    max-width: 970px;
+    max-width: 840px;
     width: 85vw;
     margin-bottom: 50px;
   }
