@@ -333,12 +333,11 @@
       return avatarCache.get(userId)!;
     }
 
-    const promise = fetch(`/.netlify/functions/roblox-proxy/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`)
-      .then((res) => res.json()).then((body) => {
-        // console.log("body from json response:", body)
-        if (!body.url) throw new Error("Error finding url field on proxy response");
-        return body.url;
-      });
+    const promise = fetch(`/.netlify/functions/roblox-proxy/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`).then((res) => res.text()).then((body) => {
+      console.log("body from text response:", body)
+      if (!body.url) throw new Error("Error finding url field on proxy response");
+      return body.url;
+    });
       
     avatarCache.set(userId, promise);
     return promise;
