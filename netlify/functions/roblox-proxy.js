@@ -12,8 +12,8 @@ export default async (request, context) => {
       method: request.method,
     });
     
-    console.log("sending response:", response?.url);
-    return response?.url;
+    console.log("sending response:", response);
+    return response;
   } catch (error) {
     console.error("got error:", error);
     return new Response(error.toString(), {
