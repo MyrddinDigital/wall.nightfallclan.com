@@ -335,17 +335,11 @@
 
     const promise = fetch(`/.netlify/functions/roblox-proxy/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`)
       .then(res => {
-        if (!res.ok) {
+        console.log("res from inside of promise:", res, "decoded text:", res.text())
+        if (!res) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
-        return res.json();
-      })
-      .then(data => {
-        const imageUrl = data?.data?.[0]?.imageUrl;
-        if (!imageUrl) {
-          throw new Error(`Avatar URL not found for user ${userId}`);
-        }
-        return imageUrl;
+        return res.text();
       });
       
     avatarCache.set(userId, promise);
