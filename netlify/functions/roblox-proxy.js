@@ -13,7 +13,10 @@ export default async (request, context) => {
     });
     
     console.log("sending response:", response);
-    return response;
+    return {
+      ...response,
+      url2: response?.url
+    };
   } catch (error) {
     console.error("got error:", error);
     return new Response(error.toString(), {
