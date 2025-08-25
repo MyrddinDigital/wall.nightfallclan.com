@@ -336,15 +336,14 @@
     const promise = fetch(`/.netlify/functions/roblox-proxy/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`)
       .then(res => {
         console.log("res from step 1:", res)
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
       .then(data => {
         console.log("res from step 2:", data)
-        return data?.url || throw new Error("Error finding url field on proxy response");
-      })
+        if (!data.url) throw new Error("Error finding url field on proxy response");
+        return data?.url
+      });
       
     avatarCache.set(userId, promise);
     return promise;
