@@ -11,8 +11,10 @@ export default async (request, context) => {
       },
       method: request.method,
     });
+
+    const body = await response.json();
     
-    return new Response(response.url);
+    return new Response(body.data[0].imageUrl);
   } catch (error) {
     console.error("got error:", error);
     return new Response(error.toString(), {
