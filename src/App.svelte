@@ -337,12 +337,8 @@
       .then(res => {
         console.log("res from step 1:", res)
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        console.log("res from step 2:", data)
-        if (!data.url) throw new Error("Error finding url field on proxy response");
-        return data?.url
+        if (!res.url) throw new Error("Error finding url field on proxy response");
+        return res.url;
       });
       
     avatarCache.set(userId, promise);
