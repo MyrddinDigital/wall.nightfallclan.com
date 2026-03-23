@@ -484,7 +484,7 @@
 
 {#if isGraphRoute}
   <div class="search-container" class:scrolled={iFrameScrolled}>
-    <div class="nav-links nav-links--overlay">
+    <div class="nav-links nav-links">
         <a class="nav-link" href="https://nightfallclan.com">
         <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
         History
@@ -888,7 +888,7 @@
   .search-container {
     display: flex;
     width: 100%;
-    padding: 0.6rem 0 1rem 0;
+    padding: 1rem 0 1rem 0;
     flex-direction: row;
     align-items: center;
     height: 39px;
@@ -957,6 +957,8 @@
   }
 
   .nav-links {
+    width: 100%;
+    justify-content: center;
     display: flex;
     gap: 10px;
     padding-top: 10px;
@@ -964,11 +966,12 @@
     font-size: 16px;
     font-weight: 400;
 
-    @media (min-width: 1360px) {
+    @media (min-width: 1500px) {
       position: fixed;
       left: 50px;
       top: 8px;
       z-index: 15;
+      width: auto;
     }
   }
 
@@ -1005,12 +1008,5 @@
     width: 100%;
     height: 100%;
     border: none;
-  }
-
-  .nav-links--overlay {
-    position: fixed;
-    left: 50px;
-    top: 8px;
-    z-index: 15;
   }
 </style>
