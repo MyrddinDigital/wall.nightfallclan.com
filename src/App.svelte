@@ -1,5 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
+
+  const isGraphRoute = window.location.pathname === '/graph';
   type Poster = {
     user: {
       userId: number;
@@ -43,7 +45,7 @@
     } else {
       document.body.style.overflow = '';
     }
-    
+
     // Cleanup function to reset overflow when component is destroyed
     return () => {
       document.body.style.overflow = '';
@@ -80,7 +82,7 @@
       // Set time to beginning of the day in local timezone
       parsedDate.setHours(0, 0, 0, 0);
       const startDate = parsedDate.getTime();
-      
+
       const nextDay = new Date(parsedDate);
       nextDay.setDate(nextDay.getDate() + 1);
       const endDate = nextDay.getTime();
@@ -94,7 +96,7 @@
 
   $effect(() => {
     const value = inputValue;
-    
+
     const isUserInput = document.activeElement?.tagName === 'INPUT';
     const delay = isUserInput ? 300 : 0;
 
@@ -134,37 +136,37 @@
       if (filter) newDateFilter = filter;
       newQuery = newQuery.replace(duringDateRegex, '').trim();
     }
-    
+
     const finalFilter = Object.keys(newDateFilter).length > 0 ? newDateFilter : null;
 
     // Set loading state when search values change
     if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(finalFilter) !== JSON.stringify(dateFilter)) {
       loading = true;
     }
-    
+
     const timeout = setTimeout(async () => {
       // Only update if values have changed
       if (newQuery !== query || newQueryUser !== queryUser || JSON.stringify(finalFilter) !== JSON.stringify(dateFilter)) {
         // Always reset pagination when search changes
         visibleStartIndex = 0;
         visibleEndIndex = postsPerLoad;
-        
+
         // Update the query values
         query = newQuery;
         queryUser = newQueryUser;
         dateFilter = finalFilter;
-        
+
         // Scroll to top when there's an active search
         if (query || queryUser || dateFilter) {
           window.scrollTo(0, 0);
         }
-        
+
         // Small delay to ensure loading state is shown
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       loading = false;
     }, delay);
-    
+
     return () => {
       clearTimeout(timeout);
     };
@@ -176,17 +178,17 @@
   let loading = $state(true)
 
   let filteredPosts: Posts = $state([]);
-  
+
   // Reactive statement to handle filtering
   $effect(() => {
     // Skip if we're already loading or posts aren't loaded yet
     if (loading || !posts.length) return;
-    
+
     // Create a new array to trigger reactivity
     let result = [...posts];
-    
+
     if (queryUser) {
-      result = result.filter(post => 
+      result = result.filter(post =>
         post.poster?.user.username.toLowerCase().includes(queryUser.toLowerCase())
       );
     }
@@ -199,17 +201,17 @@
 
         if (currentFilter.start && postTimestamp < currentFilter.start) return false;
         if (currentFilter.end && postTimestamp >= currentFilter.end) return false;
-        
+
         return true;
       });
     }
-    
+
     if (query) {
-      result = result.filter(post => 
+      result = result.filter(post =>
         post.body.toLowerCase().includes(query.toLowerCase())
       );
     }
-    
+
     filteredPosts = result;
   });
   let currentPagePosts: SanitizedPosts = $derived(sanitizePosts(filteredPosts.slice(visibleStartIndex, visibleEndIndex)))
@@ -217,7 +219,7 @@
   let showJumpToOldest = $derived(visibleStartIndex > 0);
   let showJumpToNewest = $derived(visibleEndIndex < filteredPosts.length);
 
-  fetch('https://raw.githubusercontent.com/MerlinSoftworks/rbx-wall-archive/refs/heads/master/public/data/NFC.json').then(async res => {
+  fetch('https://raw.githubusercontent.com/MyrddinDigital/wall.nightfallclan.com/refs/heads/main/public/data/NFC.json').then(async res => {
     posts = await res.json();
     loading = false;
   })
@@ -226,13 +228,13 @@
     // Reset pagination first
     visibleStartIndex = 0;
     visibleEndIndex = postsPerLoad;
-    
+
     // Set loading state immediately
     loading = true;
-    
+
     // Force UI update by waiting for the next tick
     await tick();
-    
+
     // Update the search values in the next microtask
     await Promise.resolve();
 
@@ -244,10 +246,10 @@
     } else {
       inputValue = `${inputValue} ${fromUserString}`.trim();
     }
-    
+
     // Scroll to top instantly when clicking a username
     window.scrollTo(0, 0);
-    
+
     // Ensure loading state is shown for at least 100ms
     setTimeout(() => {
       loading = false;
@@ -335,11 +337,11 @@
 
     const promise = fetch(`/.netlify/functions/roblox-proxy/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`)
       .then((res) => res.text());
-      
+
     avatarCache.set(userId, promise);
     return promise;
   }
-  
+
   function observeTop(node: HTMLElement) {
     const observer = new IntersectionObserver(async (entries) => {
       if (entries[0].isIntersecting && visibleStartIndex > 0) {
@@ -371,9 +373,9 @@
     // First set the indices to show the oldest posts
     visibleStartIndex = 0;
     visibleEndIndex = postsPerLoad;
-    
+
     // Force immediate scroll to top
-    
+
     // Then update the UI and smooth scroll if needed
     tick().then(() => {
       // Small delay to ensure the DOM has updated
@@ -404,6 +406,19 @@
   let lastScrollY = 0;
   let scrollDirection = $state<'up' | 'down' | null>(null);
   let scrolled = $state(false);
+
+  let iFrameScrolled = $state(false);
+
+  $effect(() => {
+    function handleIframeMessage(event: MessageEvent) {
+      if (event.data?.type === 'scroll') {
+        iFrameScrolled = event.data.scrollY > 60;
+      }
+    }
+
+    window.addEventListener('message', handleIframeMessage);
+    return () => window.removeEventListener('message', handleIframeMessage);
+  });
 
   function handleScroll() {
     const currentScrollY = window.scrollY;
@@ -467,6 +482,30 @@
 
 <svelte:window on:scroll={handleScroll} />
 
+{#if isGraphRoute}
+  <div class="search-container" class:scrolled={iFrameScrolled}>
+    <div class="nav-links nav-links--overlay">
+        <a class="nav-link" href="https://nightfallclan.com">
+        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        History
+        </a>
+        <a class="nav-link" href="/">
+        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
+        Wall
+        </a>
+        <div class="nav-link nav-link--current">
+        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        Graph
+        </div>
+    </div>
+  </div>
+  <iframe
+    src="https://myrddindigital.github.io/rbx-wall-activity-chart/"
+    title="Wall Activity Chart"
+    class="graph-frame"
+  ></iframe>
+{:else}
+
 <div class="nav-links">
   <a class="nav-link"href="https://nightfallclan.com">
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
@@ -476,6 +515,10 @@
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
     Wall
   </div>
+  <a class="nav-link" href="/graph">
+    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+    Graph
+  </a>
 </div>
 
 <div class="search-container" class:scrolled={scrolled && !loading}>
@@ -552,8 +595,8 @@
                 { post.poster.user.username }
               </button>
               <span class="post__date">
-                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(post.created))}, 
-                {new Date(post.created).getFullYear()} at 
+                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(post.created))},
+                {new Date(post.created).getFullYear()} at
                 {new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(post.created))}
               </span>
             </div>
@@ -573,6 +616,8 @@
     <button class="jump-button jump-button--bottom" class:hidden={scrollDirection === 'up'} onclick={jumpToNewest}>Jump To Newest</button>
   {/if}
 </main>
+
+{/if}
 
 <style lang="scss">
   main {
@@ -608,7 +653,7 @@
     opacity: 1;
     visibility: visible;
   }
-    
+
 
   .post {
     font-family: 'Helvetica Neue', Helvetica, Arial, Lucida Grande, sans-serif;
@@ -846,11 +891,12 @@
     padding: 0.6rem 0 1rem 0;
     flex-direction: row;
     align-items: center;
+    height: 39px;
 
     position: sticky;
     top: 0;
     z-index: 10;
-  
+
     background: #121215; /* Dark background for sticky header */
 
     gap: 20px;
@@ -868,7 +914,7 @@
       align-items: stretch;
       gap: 0.75rem;
     }
-    
+
     .search-container > p {
       text-align: center;
       padding: 0;
@@ -951,5 +997,20 @@
     top: 3px;
     right: 1px;
     color: #797979;
+  }
+
+  .graph-frame {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .nav-links--overlay {
+    position: fixed;
+    left: 50px;
+    top: 8px;
+    z-index: 15;
   }
 </style>
