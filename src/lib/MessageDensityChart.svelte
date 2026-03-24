@@ -1019,14 +1019,15 @@
     }
 
     .zoom-btns {
-      order: 1;
-      justify-content: flex-start;
+      order: 2;
+      justify-content: flex-end;
       flex-shrink: 0;
+      margin-left: auto;
     }
 
     .view-posts-btn {
-      order: 2;
-      margin-left: auto;
+      order: 1;
+      margin-left: 0;
     }
   }
 
