@@ -79,6 +79,7 @@
   let filterBanned = $state(initialGraphHistoryState?.filterBanned ?? false);
   let zoomed = $state(false);
   let navigatingToPosts = $state(false);
+  let mobileZoomEnabled = $state(false);
   let debugRange = $state('');
   let targetBuckets = $state(clampTargetBuckets(initialGraphHistoryState?.targetBuckets));
 
@@ -375,6 +376,11 @@
       xaxis: { min: built.viewMin, max: built.viewMax },
     }, false, false);
     drawMinimap();
+  }
+
+  function toggleMobileZoom() {
+    mobileZoomEnabled = !mobileZoomEnabled;
+    chart?.updateOptions({ chart: { zoom: { enabled: mobileZoomEnabled } } }, false, false);
   }
 
   async function loadFiltered(): Promise<number[]> {
@@ -735,6 +741,9 @@
           <button class="chart-btn" onclick={resetZoom} aria-label="Reset zoom">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 12a9 9 0 1 1 3 6.7"/><polyline points="3 22 3 16 9 16"/></svg>
           </button>
+          <button class="chart-btn zoom-toggle-btn" class:active={mobileZoomEnabled} onclick={toggleMobileZoom} aria-label={mobileZoomEnabled ? 'Disable drag zoom' : 'Enable drag zoom'} aria-pressed={mobileZoomEnabled}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><circle cx="10" cy="10" r="6"/><line x1="14.5" y1="14.5" x2="21" y2="21"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="10" y1="7" x2="10" y2="13"/></svg>
+          </button>
         </div>
         <button
           class="view-posts-btn"
@@ -904,6 +913,17 @@
     }
   }
 
+  .zoom-toggle-btn {
+    @media (min-width: 901px) {
+      display: none;
+    }
+
+    &.active {
+      background: rgb(108, 149, 255);
+      color: #fff;
+    }
+  }
+
   .view-posts-btn {
     order: 1;
     border: none;
@@ -1070,6 +1090,7 @@
     .view-posts-btn {
       order: 1;
       margin-left: 0;
+      height: 44px;
     }
   }
 
