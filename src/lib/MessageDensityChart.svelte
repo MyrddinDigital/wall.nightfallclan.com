@@ -55,11 +55,14 @@
     const lo = rangeStart != null ? lowerBound(timestamps, start) : 0;
     const hi = rangeEnd != null ? upperBound(timestamps, end) : timestamps.length;
 
-    const bucketCount = Math.ceil((end - start) / intervalMs) + 1;
+    // Keep exactly the visible buckets. A trailing +1 creates an extra bucket at `end`
+    // that usually has no events, which surfaces as a misleading right-edge zero.
+    const bucketCount = Math.max(1, Math.ceil((end - start) / intervalMs));
     const counts = new Uint32Array(bucketCount);
 
     for (let i = lo; i < hi; i++) {
-      const idx = Math.floor((timestamps[i] - start) / intervalMs);
+      // Clamp boundary values (for example ts === end) into the final bucket.
+      const idx = Math.min(bucketCount - 1, Math.floor((timestamps[i] - start) / intervalMs));
       if (idx >= 0 && idx < bucketCount) counts[idx]++;
     }
 
@@ -112,20 +115,37 @@
     return `${formatDate(val)} – ${formatDate(val + currentIntervalMs)}`;
   }
 
-  function buildSeries(rangeStart?: number, rangeEnd?: number): [number, number][] {
-    const rangeMs = (rangeEnd ?? sortedTimestamps[sortedTimestamps.length - 1])
-                  - (rangeStart ?? sortedTimestamps[0]);
+  type BuiltSeries = {
+    data: [number, number][];
+    min: number; // Actual data range used for bucketing
+    max: number; // Actual data range used for bucketing
+    viewMin: number; // Plotted x-axis bounds (bucket timestamps)
+    viewMax: number; // Plotted x-axis bounds (bucket timestamps)
+  };
+
+  function buildSeries(rangeStart?: number, rangeEnd?: number): BuiltSeries {
+    const requestedMin = rangeStart ?? sortedTimestamps[0];
+    const requestedMax = rangeEnd ?? sortedTimestamps[sortedTimestamps.length - 1];
+
+    const lo = lowerBound(sortedTimestamps, requestedMin);
+    const hi = upperBound(sortedTimestamps, requestedMax);
+
+    const min = hi > lo ? sortedTimestamps[lo] : requestedMin;
+    const max = hi > lo ? sortedTimestamps[hi - 1] : requestedMax;
+    const rangeMs = max - min;
     const interval = pickInterval(rangeMs);
     currentIntervalMs = interval;
-    const data = bucketTimestamps(sortedTimestamps, interval, rangeStart, rangeEnd);
+    const data = bucketTimestamps(sortedTimestamps, interval, min, max);
     debugRange = `${formatDuration(rangeMs)} · ${intervalLabel(interval)} · ${data.length} pts`;
-    return data;
+    const viewMin = data[0]?.[0] ?? min;
+    const viewMax = data[data.length - 1]?.[0] ?? max;
+    return { data, min, max, viewMin, viewMax };
   }
 
   const TARGET_BUCKETS = 10;
 
   function pickInterval(rangeMs: number): number {
-    return rangeMs / TARGET_BUCKETS;
+    return Math.max(1, rangeMs / TARGET_BUCKETS);
   }
 
   let resetting = false;
@@ -136,17 +156,24 @@
       resetting = false;
       const fullMin = sortedTimestamps[0];
       const fullMax = sortedTimestamps[sortedTimestamps.length - 1];
+      const fullInterval = pickInterval(fullMax - fullMin);
+      const fullViewMax = fullMin + (TARGET_BUCKETS - 1) * fullInterval;
       // Ignore only the zoom event that corresponds to a full reset.
       // If a stale reset flag leaks through, we still want real zooms to update.
-      if (xaxis.min <= fullMin && xaxis.max >= fullMax) return;
+      if (xaxis.min <= fullMin && xaxis.max >= fullViewMax) return;
     }
     if (updating) return;
-    currentRange = { min: xaxis.min, max: xaxis.max };
+    // xaxis.max corresponds to the last plotted bucket timestamp (bucket start),
+    // so extend by one bucket width to include that bucket's full time window.
+    const built = buildSeries(xaxis.min, xaxis.max + currentIntervalMs);
+    currentRange = { min: built.min, max: built.max };
     zoomed = true;
-    const data = buildSeries(xaxis.min, xaxis.max);
     updating = true;
     setTimeout(() => {
-      chart.updateOptions({ series: [{ name: 'Wall Posts', data }], xaxis: { min: xaxis.min, max: xaxis.max } }, false, false);
+      chart.updateOptions({
+        series: [{ name: 'Wall Posts', data: built.data }],
+        xaxis: { min: built.viewMin, max: built.viewMax },
+      }, false, false);
       updating = false;
       drawMinimap();
     }, 0);
@@ -156,15 +183,18 @@
     resetting = true;
     currentRange = {};
     zoomed = false;
-    const data = buildSeries();
+    const built = buildSeries();
     setTimeout(() => {
-      chart.updateOptions({ series: [{ name: 'Wall Posts', data }] }, false, false);
+      chart.updateOptions({
+        series: [{ name: 'Wall Posts', data: built.data }],
+        xaxis: { min: built.viewMin, max: built.viewMax },
+      }, false, false);
       drawMinimap();
     }, 0);
     return {
       xaxis: {
-        min: sortedTimestamps[0],
-        max: sortedTimestamps[sortedTimestamps.length - 1],
+        min: built.viewMin,
+        max: built.viewMax,
       },
     };
   }
@@ -189,10 +219,11 @@
     resetting = true;
     currentRange = {};
     zoomed = false;
-    const data = buildSeries();
-    const min = sortedTimestamps[0];
-    const max = sortedTimestamps[sortedTimestamps.length - 1];
-    chart.updateOptions({ series: [{ name: 'Wall Posts', data }], xaxis: { min, max } }, false, false);
+    const built = buildSeries();
+    chart.updateOptions({
+      series: [{ name: 'Wall Posts', data: built.data }],
+      xaxis: { min: built.viewMin, max: built.viewMax },
+    }, false, false);
     drawMinimap();
   }
 
@@ -217,6 +248,7 @@
     const doPreload = () => {
       void loadFiltered().catch(() => {
         // If preloading fails, we'll retry on the next toggle.
+        console.warn('Failed to preload filtered timestamps')
       });
     };
 
@@ -237,11 +269,12 @@
     } else {
       sortedTimestamps = allTimestamps;
     }
-    const data = buildSeries(currentRange.min, currentRange.max);
-    const opts: any = { series: [{ name: 'Wall Posts', data }] };
-    if (currentRange.min != null && currentRange.max != null) {
-      opts.xaxis = { min: currentRange.min, max: currentRange.max };
-    }
+    const built = buildSeries(currentRange.min, currentRange.max);
+    currentRange = { min: built.min, max: built.max };
+    const opts: any = {
+      series: [{ name: 'Wall Posts', data: built.data }],
+      xaxis: { min: built.viewMin, max: built.viewMax },
+    };
     chart.updateOptions(opts, false, false);
     computeMinimapData();
     drawMinimap();
@@ -333,9 +366,11 @@
           beforeResetZoom: handleResetZoom,
         },
       },
-      series: [{ name: 'Wall Posts', data: initialData }],
+      series: [{ name: 'Wall Posts', data: initialData.data }],
       xaxis: {
         type: 'datetime',
+        min: initialData.viewMin,
+        max: initialData.viewMax,
         tooltip: { enabled: false },
         labels: { style: { colors: 'rgba(255, 255, 255, 0.6)' } },
       },
@@ -378,7 +413,9 @@
     if (!chart || !allTimestamps) return;
     if (!initialized) {
       initialized = true;
-      return;
+      // Skip only the initial default state. If the user toggled before
+      // chart init completed, apply that state immediately on first ready run.
+      if (!banned) return;
     }
     swapDataset(banned);
   });
@@ -425,7 +462,8 @@
 <style lang="scss">
   .chart-wrapper {
     max-height: 90vh;
-    width: 95vw;
+    width: 100%;
+    max-width: 95vw;
     margin: 2rem auto;
 
     @media (min-width: 1500px) {
@@ -512,6 +550,7 @@
   .chart-area {
     position: relative;
     width: 100%;
+    max-height: 90vh;
     aspect-ratio: 3 / 2;
 
     &.hidden {
