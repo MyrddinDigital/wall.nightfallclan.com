@@ -557,7 +557,7 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 0.5rem;
-    padding: 0 25px;
+    padding: 0 15px 0 25px;
   }
 
   .filter-toggle {
@@ -625,7 +625,6 @@
     right: 12px;
     width: 160px;
     height: 40px;
-    border-radius: 4px;
     background: rgba(0, 0, 0, 0.4);
     pointer-events: auto;
     touch-action: none;
