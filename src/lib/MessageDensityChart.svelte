@@ -20,8 +20,8 @@
   }
 
   function clampTargetBuckets(value: unknown): number {
-    if (!isFiniteNumber(value)) return 10;
-    return Math.min(500, Math.max(5, Math.round(value)));
+    if (!isFiniteNumber(value)) return 20;
+    return Math.min(200, Math.max(20, Math.round(value)));
   }
 
   function parseGraphHistoryState(raw: unknown): PartialGraphHistoryState | null {
@@ -132,6 +132,14 @@
   let minimapDragWindowSpan: number | null = null;
   let pendingMinimapClientX: number | null = null;
   let minimapPanFrame = 0;
+  let minimapVisible = $state(true);
+  let minimapFadeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function resetMinimapFadeTimer() {
+    minimapVisible = true;
+    if (minimapFadeTimer) clearTimeout(minimapFadeTimer);
+    minimapFadeTimer = setTimeout(() => { minimapVisible = false; }, 4000);
+  }
 
   function lowerBound(arr: number[], target: number): number {
     let lo = 0, hi = arr.length;
@@ -351,6 +359,7 @@
       resetZoom();
       return;
     }
+    resetMinimapFadeTimer();
     chart.zoomX(newMin, newMax);
   }
 
@@ -565,6 +574,7 @@
     if (!minimapCanvas || event.button !== 0) return;
     if (currentRange.min == null || currentRange.max == null) return;
 
+    resetMinimapFadeTimer();
     minimapDragWindowSpan = currentRange.max - currentRange.min;
     minimapDragging = true;
     minimapPointerId = event.pointerId;
@@ -576,6 +586,7 @@
   function handleMinimapPointerMove(event: PointerEvent) {
     if (!minimapDragging) return;
     if (minimapPointerId !== event.pointerId) return;
+    resetMinimapFadeTimer();
     scheduleMinimapPan(event.clientX);
     event.preventDefault();
   }
@@ -612,7 +623,7 @@
         fontFamily: 'system-ui, Avenir, Helvetica, Arial, sans-serif',
         animations: { enabled: false },
         toolbar: { show: false },
-        zoom: { enabled: true, type: 'x', autoScaleYaxis: true },
+        zoom: { enabled: window.innerWidth > 900, type: 'x', autoScaleYaxis: true },
         events: {
           zoomed: handleZoomed,
           beforeResetZoom: handleResetZoom,
@@ -688,8 +699,18 @@
     refreshSeriesForResolution();
   });
 
+  $effect(() => {
+    if (zoomed) {
+      resetMinimapFadeTimer();
+    } else {
+      if (minimapFadeTimer) { clearTimeout(minimapFadeTimer); minimapFadeTimer = null; }
+      minimapVisible = true;
+    }
+  });
+
   onDestroy(() => {
     if (minimapPanFrame) cancelAnimationFrame(minimapPanFrame);
+    if (minimapFadeTimer) clearTimeout(minimapFadeTimer);
     chart?.destroy();
   });
 </script>
@@ -735,10 +756,11 @@
         <input
           id="resolution-slider"
           type="range"
-          min="5"
-          max="500"
+          min="20"
+          max="200"
           step="1"
           bind:value={targetBuckets}
+          style="--fill: {((targetBuckets - 20) / (200 - 20)) * 100}%"
         />
       </label>
       <label class="filter-toggle">
@@ -753,6 +775,7 @@
       <canvas
         bind:this={minimapCanvas}
         class="minimap"
+        class:faded={!minimapVisible}
         onpointerdown={handleMinimapPointerDown}
         onpointermove={handleMinimapPointerMove}
         onpointerup={handleMinimapPointerUp}
@@ -955,6 +978,22 @@
     .filter-toggle {
       order: 3;
       justify-self: start;
+      font-size: 0.95rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+
+      &:has(input:checked) {
+        background: rgba(108, 149, 255, 0.25);
+        border-color: rgba(108, 149, 255, 0.6);
+        color: rgb(180, 200, 255);
+      }
+
+      input {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
     }
 
     .resolution-control {
@@ -968,6 +1007,50 @@
       input {
         width: 100%;
         max-width: none;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        margin-block: 0.5rem;
+        border-radius: 9999px;
+        background: linear-gradient(
+          to right,
+          rgb(108, 149, 255) var(--fill),
+          rgba(255, 255, 255, 0.15) var(--fill)
+        );
+        outline: none;
+
+        &::-webkit-slider-runnable-track {
+          height: 6px;
+          border-radius: 9999px;
+        }
+
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: rgb(108, 149, 255);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+          cursor: pointer;
+          margin-top: -8px;
+        }
+
+        &::-moz-range-track {
+          height: 6px;
+          border-radius: 9999px;
+          background: transparent;
+        }
+
+        &::-moz-range-thumb {
+          width: 22px;
+          height: 22px;
+          border: none;
+          border-radius: 50%;
+          background: rgb(108, 149, 255);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+          cursor: pointer;
+        }
       }
     }
 
@@ -978,14 +1061,15 @@
     }
 
     .zoom-btns {
-      order: 1;
-      justify-content: flex-start;
+      order: 2;
+      justify-content: flex-end;
       flex-shrink: 0;
+      margin-left: auto;
     }
 
     .view-posts-btn {
-      order: 2;
-      margin-left: auto;
+      order: 1;
+      margin-left: 0;
     }
   }
 
@@ -1004,10 +1088,16 @@
     pointer-events: auto;
     touch-action: none;
     cursor: grab;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+
+    &.faded {
+      opacity: 0;
+    }
 
     @media (max-width: 900px) {
-      width: 100px;
-      height: 28px;
+      width: 180px;
+      height: 50px;
     }
   }
 </style>
