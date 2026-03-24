@@ -25,7 +25,10 @@
     const current = `${window.location.pathname}${window.location.search}`;
     if (next === current) return;
 
-    window.history.pushState({}, '', next);
+    const currentState = (window.history.state && typeof window.history.state === 'object')
+      ? { ...(window.history.state as Record<string, unknown>) }
+      : {};
+    window.history.pushState(currentState, '', next);
     syncRouteFromLocation();
   }
 

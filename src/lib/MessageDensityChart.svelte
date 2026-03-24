@@ -2,15 +2,85 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import ApexCharts from 'apexcharts';
 
+  type GraphHistoryRange = {
+    min: number;
+    max: number;
+  };
+
+  type GraphHistoryState = {
+    filterBanned: boolean;
+    targetBuckets: number;
+    range?: GraphHistoryRange;
+  };
+
+  type PartialGraphHistoryState = Partial<GraphHistoryState>;
+
+  function isFiniteNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value);
+  }
+
+  function clampTargetBuckets(value: unknown): number {
+    if (!isFiniteNumber(value)) return 10;
+    return Math.min(500, Math.max(5, Math.round(value)));
+  }
+
+  function parseGraphHistoryState(raw: unknown): PartialGraphHistoryState | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const candidate = raw as Record<string, unknown>;
+    const parsed: PartialGraphHistoryState = {};
+
+    if (typeof candidate.filterBanned === 'boolean') {
+      parsed.filterBanned = candidate.filterBanned;
+    }
+
+    if (isFiniteNumber(candidate.targetBuckets)) {
+      parsed.targetBuckets = clampTargetBuckets(candidate.targetBuckets);
+    }
+
+    if (candidate.range && typeof candidate.range === 'object') {
+      const range = candidate.range as Record<string, unknown>;
+      if (isFiniteNumber(range.min) && isFiniteNumber(range.max) && range.max > range.min) {
+        parsed.range = { min: range.min, max: range.max };
+      }
+    }
+
+    return Object.keys(parsed).length ? parsed : null;
+  }
+
+  function readGraphHistoryState(): PartialGraphHistoryState | null {
+    if (typeof window === 'undefined') return null;
+    const state = window.history.state;
+    if (!state || typeof state !== 'object') return null;
+    return parseGraphHistoryState((state as Record<string, unknown>).graphView);
+  }
+
+  function graphRangesEqual(a?: GraphHistoryRange, b?: GraphHistoryRange): boolean {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    return a.min === b.min && a.max === b.max;
+  }
+
+  function graphStatesEqual(prev: PartialGraphHistoryState | null, next: GraphHistoryState): boolean {
+    if (!prev) return false;
+    const prevFilterBanned = typeof prev.filterBanned === 'boolean' ? prev.filterBanned : false;
+    const prevTargetBuckets = clampTargetBuckets(prev.targetBuckets);
+    return (
+      prevFilterBanned === next.filterBanned &&
+      prevTargetBuckets === next.targetBuckets &&
+      graphRangesEqual(prev.range, next.range)
+    );
+  }
+
+  const initialGraphHistoryState = readGraphHistoryState();
 
   let chartEl: HTMLDivElement;
   let chart: ApexCharts;
   let loading = $state(true);
-  let filterBanned = $state(false);
+  let filterBanned = $state(initialGraphHistoryState?.filterBanned ?? false);
   let zoomed = $state(false);
   let navigatingToPosts = $state(false);
   let debugRange = $state('');
-  let targetBuckets = $state(10);
+  let targetBuckets = $state(clampTargetBuckets(initialGraphHistoryState?.targetBuckets));
 
   // Non-reactive — avoid Svelte proxy overhead on 251K items
   let sortedTimestamps: number[];
@@ -20,6 +90,37 @@
   let currentRange: { min?: number; max?: number } = {};
   let currentIntervalMs = 0;
   const ZOOM_EPSILON_MS = 1;
+  let lastAppliedFilterBanned: boolean | null = null;
+
+  function persistGraphHistoryState() {
+    if (typeof window === 'undefined' || window.location.pathname !== '/graph') return;
+
+    const baseState = (window.history.state && typeof window.history.state === 'object')
+      ? (window.history.state as Record<string, unknown>)
+      : {};
+
+    const nextGraphState: GraphHistoryState = {
+      filterBanned,
+      targetBuckets: clampTargetBuckets(targetBuckets),
+    };
+
+    if (
+      currentRange.min != null &&
+      currentRange.max != null &&
+      hasNonZeroZoom(currentRange)
+    ) {
+      nextGraphState.range = { min: currentRange.min, max: currentRange.max };
+    }
+
+    const previousGraphState = parseGraphHistoryState(baseState.graphView);
+    if (graphStatesEqual(previousGraphState, nextGraphState)) return;
+
+    window.history.replaceState(
+      { ...baseState, graphView: nextGraphState },
+      '',
+      window.location.href
+    );
+  }
 
   // Minimap
   const MINIMAP_BUCKETS = 100;
@@ -81,8 +182,12 @@
       : `after:${after} before:${before}`;
     const params = new URLSearchParams({ search: searchQuery });
 
+    persistGraphHistoryState();
     navigatingToPosts = true;
-    window.history.pushState({}, '', `/?${params.toString()}`);
+    const currentState = (window.history.state && typeof window.history.state === 'object')
+      ? { ...(window.history.state as Record<string, unknown>) }
+      : {};
+    window.history.pushState(currentState, '', `/?${params.toString()}`);
     window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
@@ -209,6 +314,7 @@
     const built = buildSeries(xaxis.min, xaxis.max + currentIntervalMs);
     currentRange = { min: built.min, max: built.max };
     zoomed = hasNonZeroZoom(currentRange);
+    persistGraphHistoryState();
     updating = true;
     setTimeout(() => {
       chart.updateOptions({
@@ -224,6 +330,7 @@
     resetting = true;
     currentRange = {};
     zoomed = false;
+    persistGraphHistoryState();
     const built = buildSeries();
     setTimeout(() => {
       chart.updateOptions({
@@ -254,6 +361,7 @@
     resetting = true;
     currentRange = {};
     zoomed = false;
+    persistGraphHistoryState();
     const built = buildSeries();
     chart.updateOptions({
       series: [{ name: 'Wall Posts', data: built.data }],
@@ -314,6 +422,7 @@
     chart.updateOptions(opts, false, false);
     computeMinimapData();
     drawMinimap();
+    persistGraphHistoryState();
   }
 
   function refreshSeriesForResolution() {
@@ -327,6 +436,20 @@
       xaxis: { min: built.viewMin, max: built.viewMax },
     }, false, false);
     drawMinimap();
+    persistGraphHistoryState();
+  }
+
+  function restoreRangeFromHistory(range?: GraphHistoryRange) {
+    if (!chart || !sortedTimestamps || !range) return;
+    const built = buildSeries(range.min, range.max);
+    currentRange = { min: built.min, max: built.max };
+    zoomed = hasNonZeroZoom(currentRange);
+    chart.updateOptions({
+      series: [{ name: 'Wall Posts', data: built.data }],
+      xaxis: { min: built.viewMin, max: built.viewMax },
+    }, false, false);
+    drawMinimap();
+    persistGraphHistoryState();
   }
 
   function computeMinimapData() {
@@ -533,22 +656,27 @@
     };
 
     chart = new ApexCharts(chartEl, options);
-    chart.render();
-    computeMinimapData();
+    await chart.render();
+
+    if (filterBanned) {
+      await swapDataset(true);
+    } else {
+      computeMinimapData();
+      drawMinimap();
+      persistGraphHistoryState();
+    }
+
+    restoreRangeFromHistory(initialGraphHistoryState?.range);
+    lastAppliedFilterBanned = filterBanned;
     preloadFiltered();
   });
 
-  let initialized = false;
   $effect(() => {
     const banned = filterBanned;
-    if (!chart || !allTimestamps) return;
-    if (!initialized) {
-      initialized = true;
-      // Skip only the initial default state. If the user toggled before
-      // chart init completed, apply that state immediately on first ready run.
-      if (!banned) return;
-    }
-    swapDataset(banned);
+    if (!chart || !allTimestamps || lastAppliedFilterBanned === null) return;
+    if (banned === lastAppliedFilterBanned) return;
+    lastAppliedFilterBanned = banned;
+    void swapDataset(banned);
   });
 
   let resolutionInitialized = false;
