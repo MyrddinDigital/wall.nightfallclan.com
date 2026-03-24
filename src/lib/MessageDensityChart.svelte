@@ -1006,24 +1006,49 @@
       input {
         width: 100%;
         max-width: none;
+        -webkit-appearance: none;
+        appearance: none;
         height: 6px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.15);
+        outline: none;
+
+        &::-webkit-slider-runnable-track {
+          height: 6px;
+          border-radius: 9999px;
+        }
 
         &::-webkit-slider-thumb {
-          width: 28px;
-          height: 28px;
           -webkit-appearance: none;
           appearance: none;
+          width: 22px;
+          height: 22px;
           border-radius: 50%;
           background: rgb(108, 149, 255);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
           cursor: pointer;
+          margin-top: -8px;
+        }
+
+        &::-moz-range-track {
+          height: 6px;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        &::-moz-range-progress {
+          height: 6px;
+          border-radius: 9999px;
+          background: rgb(108, 149, 255);
         }
 
         &::-moz-range-thumb {
-          width: 28px;
-          height: 28px;
+          width: 22px;
+          height: 22px;
           border: none;
           border-radius: 50%;
           background: rgb(108, 149, 255);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
           cursor: pointer;
         }
       }
