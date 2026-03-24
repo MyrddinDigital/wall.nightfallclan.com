@@ -1006,8 +1006,8 @@
     cursor: grab;
 
     @media (max-width: 900px) {
-      width: 100px;
-      height: 28px;
+      width: 180px;
+      height: 50px;
     }
   }
 </style>
