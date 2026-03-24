@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"B:/Projects/GitHub/MyrddinDigital/wall.nightfallclan.com\" diff src/App.svelte)",
+      "Bash(node -e \":*)",
+      "Bash(node:*)"
+    ]
+  }
+}

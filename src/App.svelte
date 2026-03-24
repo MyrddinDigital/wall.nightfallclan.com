@@ -1,7 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import MessageDensityChart from './lib/MessageDensityChart.svelte';
 
   const isGraphRoute = window.location.pathname === '/graph';
+
   type Poster = {
     user: {
       userId: number;
@@ -407,19 +409,6 @@
   let scrollDirection = $state<'up' | 'down' | null>(null);
   let scrolled = $state(false);
 
-  let iFrameScrolled = $state(false);
-
-  $effect(() => {
-    function handleIframeMessage(event: MessageEvent) {
-      if (event.data?.type === 'scroll') {
-        iFrameScrolled = event.data.scrollY > 60;
-      }
-    }
-
-    window.addEventListener('message', handleIframeMessage);
-    return () => window.removeEventListener('message', handleIframeMessage);
-  });
-
   function handleScroll() {
     const currentScrollY = window.scrollY;
     scrolled = currentScrollY > 60;
@@ -483,29 +472,22 @@
 <svelte:window on:scroll={handleScroll} />
 
 {#if isGraphRoute}
-  <div class="search-container" class:scrolled={iFrameScrolled}>
-    <div class="nav-links nav-links">
-        <a class="nav-link" href="https://nightfallclan.com">
-        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-        History
-        </a>
-        <a class="nav-link" href="/">
-        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
-        Wall
-        </a>
-        <div class="nav-link nav-link--current">
-        <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-        Graph
-        </div>
-    </div>
+<div class="nav-links">
+  <a class="nav-link" href="https://nightfallclan.com">
+    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+    History
+  </a>
+  <a class="nav-link" href="/">
+    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
+    Wall
+  </a>
+  <div class="nav-link nav-link--current">
+    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+    Graph
   </div>
-  <iframe
-    src="https://myrddindigital.github.io/rbx-wall-activity-chart/"
-    title="Wall Activity Chart"
-    class="graph-frame"
-  ></iframe>
+</div>
+<MessageDensityChart />
 {:else}
-
 <div class="nav-links">
   <a class="nav-link"href="https://nightfallclan.com">
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
@@ -616,7 +598,6 @@
     <button class="jump-button jump-button--bottom" class:hidden={scrollDirection === 'up'} onclick={jumpToNewest}>Jump To Newest</button>
   {/if}
 </main>
-
 {/if}
 
 <style lang="scss">
@@ -789,11 +770,6 @@
     color: white;
   }
 
-  .search-container > p {
-    margin: 0;
-    white-space: nowrap;
-  }
-
   .jump-button {
     font-family: Helvetica, Arial, sans-serif;
     font-weight: bold;
@@ -914,15 +890,6 @@
       align-items: stretch;
       gap: 0.75rem;
     }
-
-    .search-container > p {
-      text-align: center;
-      padding: 0;
-
-      @media (min-width: 768px) {
-        padding: 0.5rem 0;
-      }
-    }
   }
 
   .search-container > .input-wrapper {
@@ -1000,13 +967,5 @@
     top: 3px;
     right: 1px;
     color: #797979;
-  }
-
-  .graph-frame {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
   }
 </style>
