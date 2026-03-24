@@ -8,6 +8,7 @@
   let loading = $state(true);
   let filterBanned = $state(false);
   let zoomed = $state(false);
+  let navigatingToPosts = $state(false);
   let debugRange = $state('');
 
   // Non-reactive — avoid Svelte proxy overhead on 251K items
@@ -17,6 +18,7 @@
   let filteredTimestampsPromise: Promise<number[]> | null = null;
   let currentRange: { min?: number; max?: number } = {};
   let currentIntervalMs = 0;
+  const ZOOM_EPSILON_MS = 1;
 
   // Minimap
   const MINIMAP_BUCKETS = 100;
@@ -24,6 +26,7 @@
   let minimapData: number[] = [];
   let minimapDragging = false;
   let minimapPointerId: number | null = null;
+  let minimapDragWindowSpan: number | null = null;
   let pendingMinimapClientX: number | null = null;
   let minimapPanFrame = 0;
 
@@ -45,6 +48,41 @@
       else hi = mid;
     }
     return lo;
+  }
+
+  function hasNonZeroZoom(range: { min?: number; max?: number }): boolean {
+    if (!sortedTimestamps?.length || range.min == null || range.max == null) return false;
+
+    const fullMin = sortedTimestamps[0];
+    const fullMax = sortedTimestamps[sortedTimestamps.length - 1];
+
+    return (
+      range.min > fullMin + ZOOM_EPSILON_MS ||
+      range.max < fullMax - ZOOM_EPSILON_MS
+    );
+  }
+
+  function formatDateForSearch(ts: number): string {
+    const date = new Date(ts);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  }
+
+  function viewPostsInCurrentRange() {
+    if (!hasNonZeroZoom(currentRange) || currentRange.min == null || currentRange.max == null) return;
+
+    const after = formatDateForSearch(currentRange.min);
+    const before = formatDateForSearch(currentRange.max);
+    const searchQuery = after === before
+      ? `during:${after}`
+      : `after:${after} before:${before}`;
+    const params = new URLSearchParams({ search: searchQuery });
+
+    navigatingToPosts = true;
+    window.history.pushState({}, '', `/?${params.toString()}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 
   function bucketTimestamps(
@@ -146,7 +184,7 @@
     return { data, min, max, viewMin, viewMax };
   }
 
-  const TARGET_BUCKETS = 10;
+  const TARGET_BUCKETS = 300;
 
   function pickInterval(rangeMs: number): number {
     return Math.max(1, rangeMs / TARGET_BUCKETS);
@@ -171,7 +209,7 @@
     // so extend by one bucket width to include that bucket's full time window.
     const built = buildSeries(xaxis.min, xaxis.max + currentIntervalMs);
     currentRange = { min: built.min, max: built.max };
-    zoomed = true;
+    zoomed = hasNonZeroZoom(currentRange);
     updating = true;
     setTimeout(() => {
       chart.updateOptions({
@@ -183,7 +221,7 @@
     }, 0);
   }
 
-  function handleResetZoom() {
+  function handleResetZoom(): void {
     resetting = true;
     currentRange = {};
     zoomed = false;
@@ -195,12 +233,6 @@
       }, false, false);
       drawMinimap();
     }, 0);
-    return {
-      xaxis: {
-        min: built.viewMin,
-        max: built.viewMax,
-      },
-    };
   }
 
   function zoomBy(factor: number) {
@@ -275,6 +307,7 @@
     }
     const built = buildSeries(currentRange.min, currentRange.max);
     currentRange = { min: built.min, max: built.max };
+    zoomed = hasNonZeroZoom(currentRange);
     const opts: any = {
       series: [{ name: 'Wall Posts', data: built.data }],
       xaxis: { min: built.viewMin, max: built.viewMax },
@@ -354,7 +387,7 @@
     const fullRange = fullMax - fullMin;
     if (fullRange <= 0) return;
 
-    const windowSpan = currentRange.max - currentRange.min;
+    const windowSpan = minimapDragWindowSpan ?? (currentRange.max - currentRange.min);
     if (windowSpan <= 0 || windowSpan >= fullRange) return;
 
     const rect = minimapCanvas.getBoundingClientRect();
@@ -392,12 +425,14 @@
   function stopMinimapDrag() {
     minimapDragging = false;
     minimapPointerId = null;
+    minimapDragWindowSpan = null;
   }
 
   function handleMinimapPointerDown(event: PointerEvent) {
     if (!minimapCanvas || event.button !== 0) return;
     if (currentRange.min == null || currentRange.max == null) return;
 
+    minimapDragWindowSpan = currentRange.max - currentRange.min;
     minimapDragging = true;
     minimapPointerId = event.pointerId;
     minimapCanvas.setPointerCapture(event.pointerId);
@@ -521,9 +556,23 @@
     <div class="chart-controls">
       <label class="filter-toggle">
         <input type="checkbox" bind:checked={filterBanned} />
-        <span>Filter banned accounts</span>
+        <span>Exclude banned accounts</span>
       </label>
       <div class="chart-btns">
+      <button
+        class="view-posts-btn"
+        class:is-hidden={!zoomed}
+        onclick={viewPostsInCurrentRange}
+        disabled={!zoomed || navigatingToPosts}
+        aria-hidden={!zoomed}
+      >
+        {#if navigatingToPosts}
+          <span class="view-posts-btn__spinner" aria-hidden="true"></span>
+          Loading posts...
+        {:else}
+          View these posts
+        {/if}
+      </button>
         <button class="chart-btn" onclick={() => zoomBy(0.5)} aria-label="Zoom in">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       </button>
@@ -637,6 +686,41 @@
       font-size: 1rem;
       border-radius: 50%;
     }
+  }
+
+  .view-posts-btn {
+    border: none;
+    border-radius: 9999px;
+    background: rgb(108, 149, 255);
+    color: #fff;
+    padding: 0.45rem 0.85rem;
+    min-width: 136px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: rgb(92, 131, 230);
+    }
+
+    &.is-hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+
+  .view-posts-btn__spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-top-color: #fff;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.45rem;
+    vertical-align: text-bottom;
+    animation: spin 0.7s linear infinite;
   }
 
   .chart-area {

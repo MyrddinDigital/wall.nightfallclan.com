@@ -2,7 +2,32 @@
   import { tick } from 'svelte';
   import MessageDensityChart from './lib/MessageDensityChart.svelte';
 
-  const isGraphRoute = window.location.pathname === '/graph';
+  function getSearchValueFromUrl(): string {
+    return (new URLSearchParams(window.location.search).get('search') ?? '').trim();
+  }
+
+  let routePath = $state(window.location.pathname);
+  let isGraphRoute = $derived(routePath === '/graph');
+
+  function syncRouteFromLocation() {
+    routePath = window.location.pathname;
+    if (!isGraphRoute) {
+      inputValue = getSearchValueFromUrl();
+    }
+  }
+
+  function navigateInternal(event: MouseEvent, path: string) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+
+    const targetUrl = new URL(path, window.location.origin);
+    const next = `${targetUrl.pathname}${targetUrl.search}`;
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (next === current) return;
+
+    window.history.pushState({}, '', next);
+    syncRouteFromLocation();
+  }
 
   type Poster = {
     user: {
@@ -31,7 +56,7 @@
   let visibleEndIndex = $state(postsPerLoad);
 
   let query = $state('')
-  let inputValue = $state('')
+  let inputValue = $state(getSearchValueFromUrl())
 
   let queryUser = $state('')
 
@@ -469,7 +494,7 @@
   }
 </script>
 
-<svelte:window on:scroll={handleScroll} />
+<svelte:window on:scroll={handleScroll} on:popstate={syncRouteFromLocation} />
 
 {#if isGraphRoute}
 <div class="nav-links">
@@ -477,7 +502,7 @@
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
     History
   </a>
-  <a class="nav-link" href="/">
+  <a class="nav-link" href="/" onclick={(event) => navigateInternal(event, '/')}>
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
     Wall
   </a>
@@ -497,7 +522,7 @@
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 7.8 8v.5z"></path></svg>
     Wall
   </div>
-  <a class="nav-link" href="/graph">
+  <a class="nav-link" href="/graph" onclick={(event) => navigateInternal(event, '/graph')}>
     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
     Graph
   </a>
