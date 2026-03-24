@@ -1009,6 +1009,7 @@
         -webkit-appearance: none;
         appearance: none;
         height: 6px;
+        margin-block: 0.5rem;
         border-radius: 9999px;
         background: rgba(255, 255, 255, 0.15);
         outline: none;
