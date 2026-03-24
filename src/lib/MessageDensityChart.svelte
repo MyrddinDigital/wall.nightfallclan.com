@@ -359,6 +359,7 @@
       resetZoom();
       return;
     }
+    resetMinimapFadeTimer();
     chart.zoomX(newMin, newMax);
   }
 
