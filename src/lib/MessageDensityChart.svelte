@@ -968,6 +968,26 @@
       input {
         width: 100%;
         max-width: none;
+        height: 6px;
+
+        &::-webkit-slider-thumb {
+          width: 28px;
+          height: 28px;
+          -webkit-appearance: none;
+          appearance: none;
+          border-radius: 50%;
+          background: rgb(108, 149, 255);
+          cursor: pointer;
+        }
+
+        &::-moz-range-thumb {
+          width: 28px;
+          height: 28px;
+          border: none;
+          border-radius: 50%;
+          background: rgb(108, 149, 255);
+          cursor: pointer;
+        }
       }
     }
 
