@@ -14,6 +14,7 @@
   let sortedTimestamps: number[];
   let allTimestamps: number[];
   let filteredTimestamps: number[] | null = null;
+  let filteredTimestampsPromise: Promise<number[]> | null = null;
   let currentRange: { min?: number; max?: number } = {};
   let currentIntervalMs = 0;
 
@@ -185,6 +186,7 @@
 
   function resetZoom() {
     if (!chart) return;
+    resetting = true;
     currentRange = {};
     zoomed = false;
     const data = buildSeries();
@@ -196,10 +198,37 @@
 
   async function loadFiltered(): Promise<number[]> {
     if (filteredTimestamps) return filteredTimestamps;
-    const res = await fetch('/data/rawTimestampsFiltered.json');
-    const raw: number[] = await res.json();
-    filteredTimestamps = raw.sort((a, b) => a - b);
-    return filteredTimestamps;
+    if (!filteredTimestampsPromise) {
+      filteredTimestampsPromise = fetch('/data/rawTimestampsFiltered.json')
+        .then((res) => res.json())
+        .then((raw: number[]) => {
+          filteredTimestamps = raw.sort((a, b) => a - b);
+          return filteredTimestamps;
+        })
+        .catch((err) => {
+          filteredTimestampsPromise = null;
+          throw err;
+        });
+    }
+    return filteredTimestampsPromise;
+  }
+
+  function preloadFiltered() {
+    const doPreload = () => {
+      void loadFiltered().catch(() => {
+        // If preloading fails, we'll retry on the next toggle.
+      });
+    };
+
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: () => void) => number;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      idleWindow.requestIdleCallback(doPreload);
+    } else {
+      setTimeout(doPreload, 0);
+    }
   }
 
   async function swapDataset(useBanned: boolean) {
@@ -340,6 +369,7 @@
     chart = new ApexCharts(chartEl, options);
     chart.render();
     computeMinimapData();
+    preloadFiltered();
   });
 
   let initialized = false;
