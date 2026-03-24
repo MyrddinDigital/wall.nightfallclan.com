@@ -20,7 +20,7 @@
   }
 
   function clampTargetBuckets(value: unknown): number {
-    if (!isFiniteNumber(value)) return 10;
+    if (!isFiniteNumber(value)) return 20;
     return Math.min(500, Math.max(5, Math.round(value)));
   }
 
@@ -730,17 +730,6 @@
           {/if}
         </button>
       </div>
-      <label class="resolution-control" for="resolution-slider">
-        <span>Resolution: {targetBuckets}</span>
-        <input
-          id="resolution-slider"
-          type="range"
-          min="5"
-          max="500"
-          step="1"
-          bind:value={targetBuckets}
-        />
-      </label>
       <label class="filter-toggle">
         <input type="checkbox" bind:checked={filterBanned} />
         <span>Exclude banned accounts</span>
