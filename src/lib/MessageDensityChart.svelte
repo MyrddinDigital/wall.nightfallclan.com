@@ -133,7 +133,11 @@
   function handleZoomed(_ctx: any, { xaxis }: { xaxis: { min: number; max: number } }) {
     if (resetting) {
       resetting = false;
-      return;
+      const fullMin = sortedTimestamps[0];
+      const fullMax = sortedTimestamps[sortedTimestamps.length - 1];
+      // Ignore only the zoom event that corresponds to a full reset.
+      // If a stale reset flag leaks through, we still want real zooms to update.
+      if (xaxis.min <= fullMin && xaxis.max >= fullMax) return;
     }
     if (updating) return;
     currentRange = { min: xaxis.min, max: xaxis.max };
@@ -181,7 +185,6 @@
 
   function resetZoom() {
     if (!chart) return;
-    resetting = true;
     currentRange = {};
     zoomed = false;
     const data = buildSeries();
