@@ -623,7 +623,7 @@
         fontFamily: 'system-ui, Avenir, Helvetica, Arial, sans-serif',
         animations: { enabled: false },
         toolbar: { show: false },
-        zoom: { enabled: true, type: 'x', autoScaleYaxis: true },
+        zoom: { enabled: window.innerWidth > 900, type: 'x', autoScaleYaxis: true },
         events: {
           zoomed: handleZoomed,
           beforeResetZoom: handleResetZoom,
