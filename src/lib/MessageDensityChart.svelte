@@ -217,6 +217,7 @@
     const doPreload = () => {
       void loadFiltered().catch(() => {
         // If preloading fails, we'll retry on the next toggle.
+        console.warn('Failed to preload filtered timestamps')
       });
     };
 
@@ -378,7 +379,9 @@
     if (!chart || !allTimestamps) return;
     if (!initialized) {
       initialized = true;
-      return;
+      // Skip only the initial default state. If the user toggled before
+      // chart init completed, apply that state immediately on first ready run.
+      if (!banned) return;
     }
     swapDataset(banned);
   });
@@ -425,7 +428,8 @@
 <style lang="scss">
   .chart-wrapper {
     max-height: 90vh;
-    width: 95vw;
+    width: 100%;
+    max-width: 95vw;
     margin: 2rem auto;
 
     @media (min-width: 1500px) {
@@ -512,6 +516,7 @@
   .chart-area {
     position: relative;
     width: 100%;
+    max-height: 90vh;
     aspect-ratio: 3 / 2;
 
     &.hidden {
