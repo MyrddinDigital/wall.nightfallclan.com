@@ -82,45 +82,98 @@
     };
   });
 
-  function getDateFilter(operator: 'before' | 'after' | 'during', dateStr: string): { start?: number, end?: number } | null {
-    // Replace hyphens with slashes to encourage local time parsing for YYYY-MM-DD formats
-    const localDateStr = dateStr.replace(/-/g, '/');
-    const parts = localDateStr.split('/');
+  type ParsedDateInput =
+    | { start: number; end: number }
+    | { instant: number };
 
-    if (parts.length === 1 && /^\d{4}$/.test(parts[0])) { // YYYY
-      const year = parseInt(parts[0], 10);
-      const startDate = new Date(year, 0, 1).getTime();
-      const endDate = new Date(year + 1, 0, 1).getTime();
-      if (operator === 'before') return { end: startDate };
-      if (operator === 'after') return { start: endDate };
-      if (operator === 'during') return { start: startDate, end: endDate };
-    } else if (parts.length === 2 && /^\d{4}$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1])) { // YYYY/MM
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      if (month < 1 || month > 12) return null;
-      const startDate = new Date(year, month - 1, 1).getTime();
-      const nextMonth = new Date(year, month - 1, 1);
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      const endDate = nextMonth.getTime();
-      if (operator === 'before') return { end: startDate };
-      if (operator === 'after') return { start: endDate };
-      if (operator === 'during') return { start: startDate, end: endDate };
-    } else { // YYYY/MM/DD or other parsable format
-      const parsedDate = new Date(localDateStr);
-      if (isNaN(parsedDate.getTime())) return null;
-
-      // Set time to beginning of the day in local timezone
-      parsedDate.setHours(0, 0, 0, 0);
-      const startDate = parsedDate.getTime();
-
-      const nextDay = new Date(parsedDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      const endDate = nextDay.getTime();
-
-      if (operator === 'before') return { end: startDate };
-      if (operator === 'after') return { start: endDate };
-      if (operator === 'during') return { start: startDate, end: endDate };
+  function parseLocalDayRange(year: number, month: number, day: number): { start: number; end: number } | null {
+    const startDate = new Date(year, month - 1, day);
+    if (
+      startDate.getFullYear() !== year ||
+      startDate.getMonth() !== month - 1 ||
+      startDate.getDate() !== day
+    ) {
+      return null;
     }
+
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 1);
+    return { start: startDate.getTime(), end: endDate.getTime() };
+  }
+
+  function parseDateInput(dateStr: string): ParsedDateInput | null {
+    const trimmed = dateStr.trim();
+    if (!trimmed) return null;
+
+    const yearMatch = trimmed.match(/^(\d{4})$/);
+    if (yearMatch) {
+      const year = Number(yearMatch[1]);
+      return {
+        start: new Date(year, 0, 1).getTime(),
+        end: new Date(year + 1, 0, 1).getTime()
+      };
+    }
+
+    const yearMonthMatch = trimmed.match(/^(\d{4})[/-](\d{1,2})$/);
+    if (yearMonthMatch) {
+      const year = Number(yearMonthMatch[1]);
+      const month = Number(yearMonthMatch[2]);
+      if (month < 1 || month > 12) return null;
+
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1);
+      return { start: startDate.getTime(), end: endDate.getTime() };
+    }
+
+    const isoDateOnlyMatch = trimmed.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+    if (isoDateOnlyMatch) {
+      return parseLocalDayRange(
+        Number(isoDateOnlyMatch[1]),
+        Number(isoDateOnlyMatch[2]),
+        Number(isoDateOnlyMatch[3])
+      );
+    }
+
+    const usDateOnlyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (usDateOnlyMatch) {
+      return parseLocalDayRange(
+        Number(usDateOnlyMatch[3]),
+        Number(usDateOnlyMatch[1]),
+        Number(usDateOnlyMatch[2])
+      );
+    }
+
+    const parsedDate = new Date(trimmed);
+    if (isNaN(parsedDate.getTime())) return null;
+
+    const hasTimeComponent = /[T\s]\d{1,2}:\d{2}/.test(trimmed);
+    if (hasTimeComponent) {
+      return { instant: parsedDate.getTime() };
+    }
+
+    // Date-only strings like "Mar 7, 2025" still map to a full local day.
+    const localDayStart = new Date(parsedDate);
+    localDayStart.setHours(0, 0, 0, 0);
+    const nextDay = new Date(localDayStart);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return { start: localDayStart.getTime(), end: nextDay.getTime() };
+  }
+
+  function getDateFilter(operator: 'before' | 'after' | 'during', dateStr: string): { start?: number, end?: number } | null {
+    const parsed = parseDateInput(dateStr);
+    if (!parsed) return null;
+
+    if ('instant' in parsed) {
+      if (operator === 'before') return { end: parsed.instant };
+      if (operator === 'after') return { start: parsed.instant };
+      if (operator === 'during') return { start: parsed.instant, end: parsed.instant + 1 };
+      return null;
+    }
+
+    if (operator === 'before') return { end: parsed.start };
+    if (operator === 'after') return { start: parsed.end };
+    if (operator === 'during') return { start: parsed.start, end: parsed.end };
+
     return null;
   }
 
@@ -148,14 +201,14 @@
     const beforeMatch = newQuery.match(beforeDateRegex);
     if (beforeMatch) {
       const filter = getDateFilter('before', beforeMatch[1]);
-      if (filter?.end) newDateFilter.end = filter.end;
+      if (filter?.end != null) newDateFilter.end = filter.end;
       newQuery = newQuery.replace(beforeDateRegex, '').trim();
     }
 
     const afterMatch = newQuery.match(afterDateRegex);
     if (afterMatch) {
       const filter = getDateFilter('after', afterMatch[1]);
-      if (filter?.start) newDateFilter.start = filter.start;
+      if (filter?.start != null) newDateFilter.start = filter.start;
       newQuery = newQuery.replace(afterDateRegex, '').trim();
     }
 
@@ -229,8 +282,8 @@
         const postTimestamp = new Date(post.created).getTime();
         if (isNaN(postTimestamp)) return false;
 
-        if (currentFilter.start && postTimestamp < currentFilter.start) return false;
-        if (currentFilter.end && postTimestamp >= currentFilter.end) return false;
+        if (currentFilter.start != null && postTimestamp < currentFilter.start) return false;
+        if (currentFilter.end != null && postTimestamp >= currentFilter.end) return false;
 
         return true;
       });
