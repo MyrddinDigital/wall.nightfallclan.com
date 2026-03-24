@@ -80,6 +80,12 @@
   let zoomed = $state(false);
   let navigatingToPosts = $state(false);
   let mobileZoomEnabled = $state(false);
+  let chartDragStartX = $state<number | null>(null);
+  let chartDragCurrentX = $state<number | null>(null);
+  let chartDragging = false;
+  let chartDragPointerId: number | null = null;
+  let chartDragStartTime: number | null = null;
+  let dragOverlayEl: HTMLDivElement;
   let debugRange = $state('');
   let targetBuckets = $state(clampTargetBuckets(initialGraphHistoryState?.targetBuckets));
 
@@ -380,7 +386,69 @@
 
   function toggleMobileZoom() {
     mobileZoomEnabled = !mobileZoomEnabled;
-    chart?.updateOptions({ chart: { zoom: { enabled: mobileZoomEnabled } } }, false, false);
+  }
+
+  function getChartXInfo(clientX: number): { overlayX: number; plotX: number } | null {
+    if (!chartEl || !chart) return null;
+    const w = (chart as any).w;
+    if (!w?.globals) return null;
+    const translateX = w.globals.translateX ?? 0;
+    const gridWidth = w.globals.gridWidth ?? 1;
+    const rect = chartEl.getBoundingClientRect();
+    const plotX = Math.max(0, Math.min(gridWidth, clientX - rect.left - translateX));
+    return { overlayX: translateX + plotX, plotX };
+  }
+
+  function plotXToTime(plotX: number): number {
+    const w = (chart as any).w;
+    const gridWidth = w?.globals?.gridWidth ?? 1;
+    const ratio = Math.max(0, Math.min(1, plotX / gridWidth));
+    const viewMin = currentViewRange.min ?? sortedTimestamps[0];
+    const viewMax = currentViewRange.max ?? sortedTimestamps[sortedTimestamps.length - 1];
+    return viewMin + ratio * (viewMax - viewMin);
+  }
+
+  function handleDragZoomStart(event: PointerEvent) {
+    if (event.button !== 0 && event.pointerType !== 'touch') return;
+    const info = getChartXInfo(event.clientX);
+    if (!info) return;
+    chartDragging = true;
+    chartDragPointerId = event.pointerId;
+    chartDragStartX = info.overlayX;
+    chartDragCurrentX = info.overlayX;
+    chartDragStartTime = plotXToTime(info.plotX);
+    dragOverlayEl?.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function handleDragZoomMove(event: PointerEvent) {
+    if (!chartDragging || chartDragPointerId !== event.pointerId) return;
+    const info = getChartXInfo(event.clientX);
+    if (info) chartDragCurrentX = info.overlayX;
+  }
+
+  function handleDragZoomEnd(event: PointerEvent) {
+    if (!chartDragging || chartDragPointerId !== event.pointerId) return;
+    const info = getChartXInfo(event.clientX);
+    if (info && chartDragStartX != null && Math.abs(info.overlayX - chartDragStartX) > 10) {
+      const endTime = plotXToTime(info.plotX);
+      chart?.zoomX(Math.min(chartDragStartTime!, endTime), Math.max(chartDragStartTime!, endTime));
+    }
+    chartDragging = false;
+    chartDragPointerId = null;
+    chartDragStartX = null;
+    chartDragCurrentX = null;
+    chartDragStartTime = null;
+  }
+
+  function handleDragZoomCancel(event: PointerEvent) {
+    if (chartDragPointerId === event.pointerId) {
+      chartDragging = false;
+      chartDragPointerId = null;
+      chartDragStartX = null;
+      chartDragCurrentX = null;
+      chartDragStartTime = null;
+    }
   }
 
   async function loadFiltered(): Promise<number[]> {
@@ -780,6 +848,23 @@
   {/if}
   <div class="chart-area" class:hidden={loading}>
     <div bind:this={chartEl} class="chart-container"></div>
+    {#if mobileZoomEnabled}
+      <div
+        class="drag-zoom-overlay"
+        bind:this={dragOverlayEl}
+        onpointerdown={handleDragZoomStart}
+        onpointermove={handleDragZoomMove}
+        onpointerup={handleDragZoomEnd}
+        onpointercancel={handleDragZoomCancel}
+      >
+        {#if chartDragStartX != null && chartDragCurrentX != null}
+          <div
+            class="drag-zoom-selection"
+            style="left: {Math.min(chartDragStartX, chartDragCurrentX)}px; width: {Math.abs(chartDragCurrentX - chartDragStartX)}px;"
+          ></div>
+        {/if}
+      </div>
+    {/if}
     {#if zoomed}
       <canvas
         bind:this={minimapCanvas}
@@ -1097,6 +1182,23 @@
   .chart-container {
     position: absolute;
     inset: 0;
+  }
+
+  .drag-zoom-overlay {
+    position: absolute;
+    inset: 0;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  .drag-zoom-selection {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(108, 149, 255, 0.15);
+    border-left: 1px solid rgba(108, 149, 255, 0.6);
+    border-right: 1px solid rgba(108, 149, 255, 0.6);
+    pointer-events: none;
   }
 
   .minimap {
