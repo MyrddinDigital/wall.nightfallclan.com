@@ -977,6 +977,22 @@
     .filter-toggle {
       order: 3;
       justify-self: start;
+      font-size: 0.95rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+
+      &:has(input:checked) {
+        background: rgba(108, 149, 255, 0.25);
+        border-color: rgba(108, 149, 255, 0.6);
+        color: rgb(180, 200, 255);
+      }
+
+      input {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
     }
 
     .resolution-control {
