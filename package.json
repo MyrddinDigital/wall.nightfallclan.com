@@ -21,6 +21,7 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
-    "@types/node": "^22.15.32"
+    "@types/node": "^22.15.32",
+    "apexcharts": "^5.10.4"
   }
 }
