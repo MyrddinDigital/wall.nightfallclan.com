@@ -9,6 +9,7 @@
   let filterBanned = $state(false);
   let zoomed = $state(false);
   let debugRange = $state('');
+  let targetBuckets = $state(10);
 
   // Non-reactive — avoid Svelte proxy overhead on 251K items
   let sortedTimestamps: number[];
@@ -146,10 +147,8 @@
     return { data, min, max, viewMin, viewMax };
   }
 
-  const TARGET_BUCKETS = 10;
-
   function pickInterval(rangeMs: number): number {
-    return Math.max(1, rangeMs / TARGET_BUCKETS);
+    return Math.max(1, rangeMs / targetBuckets);
   }
 
   let resetting = false;
@@ -161,7 +160,7 @@
       const fullMin = sortedTimestamps[0];
       const fullMax = sortedTimestamps[sortedTimestamps.length - 1];
       const fullInterval = pickInterval(fullMax - fullMin);
-      const fullViewMax = fullMin + (TARGET_BUCKETS - 1) * fullInterval;
+      const fullViewMax = fullMin + (targetBuckets - 1) * fullInterval;
       // Ignore only the zoom event that corresponds to a full reset.
       // If a stale reset flag leaks through, we still want real zooms to update.
       if (xaxis.min <= fullMin && xaxis.max >= fullViewMax) return;
@@ -281,6 +280,19 @@
     };
     chart.updateOptions(opts, false, false);
     computeMinimapData();
+    drawMinimap();
+  }
+
+  function refreshSeriesForResolution() {
+    if (!chart || !sortedTimestamps) return;
+    const built = buildSeries(currentRange.min, currentRange.max);
+    if (currentRange.min != null && currentRange.max != null) {
+      currentRange = { min: built.min, max: built.max };
+    }
+    chart.updateOptions({
+      series: [{ name: 'Wall Posts', data: built.data }],
+      xaxis: { min: built.viewMin, max: built.viewMax },
+    }, false, false);
     drawMinimap();
   }
 
@@ -504,6 +516,17 @@
     swapDataset(banned);
   });
 
+  let resolutionInitialized = false;
+  $effect(() => {
+    const _targetBuckets = targetBuckets;
+    if (!chart || !sortedTimestamps) return;
+    if (!resolutionInitialized) {
+      resolutionInitialized = true;
+      return;
+    }
+    refreshSeriesForResolution();
+  });
+
   onDestroy(() => {
     if (minimapPanFrame) cancelAnimationFrame(minimapPanFrame);
     chart?.destroy();
@@ -522,6 +545,17 @@
       <label class="filter-toggle">
         <input type="checkbox" bind:checked={filterBanned} />
         <span>Filter banned accounts</span>
+      </label>
+      <label class="resolution-control" for="resolution-slider">
+        <span>Resolution: {targetBuckets}</span>
+        <input
+          id="resolution-slider"
+          type="range"
+          min="5"
+          max="500"
+          step="1"
+          bind:value={targetBuckets}
+        />
       </label>
       <div class="chart-btns">
         <button class="chart-btn" onclick={() => zoomBy(0.5)} aria-label="Zoom in">
@@ -610,6 +644,25 @@
     input {
       accent-color: rgb(108, 149, 255);
       cursor: pointer;
+    }
+  }
+
+  .resolution-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    user-select: none;
+
+    input {
+      width: 180px;
+      accent-color: rgb(108, 149, 255);
+      cursor: pointer;
+
+      @media (max-width: 768px) {
+        width: 120px;
+      }
     }
   }
 
