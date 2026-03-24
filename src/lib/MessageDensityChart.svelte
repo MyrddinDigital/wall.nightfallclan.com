@@ -22,6 +22,10 @@
   const MINIMAP_BUCKETS = 100;
   let minimapCanvas = $state<HTMLCanvasElement>();
   let minimapData: number[] = [];
+  let minimapDragging = false;
+  let minimapPointerId: number | null = null;
+  let pendingMinimapClientX: number | null = null;
+  let minimapPanFrame = 0;
 
   function lowerBound(arr: number[], target: number): number {
     let lo = 0, hi = arr.length;
@@ -308,6 +312,86 @@
     }
   }
 
+  function panZoomWindowAtClientX(clientX: number) {
+    if (!chart || !minimapCanvas) return;
+    if (currentRange.min == null || currentRange.max == null) return;
+
+    const fullMin = sortedTimestamps[0];
+    const fullMax = sortedTimestamps[sortedTimestamps.length - 1];
+    const fullRange = fullMax - fullMin;
+    if (fullRange <= 0) return;
+
+    const windowSpan = currentRange.max - currentRange.min;
+    if (windowSpan <= 0 || windowSpan >= fullRange) return;
+
+    const rect = minimapCanvas.getBoundingClientRect();
+    if (rect.width <= 0) return;
+
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const ratio = x / rect.width;
+    const center = fullMin + ratio * fullRange;
+
+    let newMin = center - windowSpan / 2;
+    let newMax = center + windowSpan / 2;
+
+    if (newMin < fullMin) {
+      newMin = fullMin;
+      newMax = fullMin + windowSpan;
+    } else if (newMax > fullMax) {
+      newMax = fullMax;
+      newMin = fullMax - windowSpan;
+    }
+
+    chart.zoomX(newMin, newMax);
+  }
+
+  function scheduleMinimapPan(clientX: number) {
+    pendingMinimapClientX = clientX;
+    if (minimapPanFrame) return;
+    minimapPanFrame = requestAnimationFrame(() => {
+      minimapPanFrame = 0;
+      if (pendingMinimapClientX == null) return;
+      panZoomWindowAtClientX(pendingMinimapClientX);
+      pendingMinimapClientX = null;
+    });
+  }
+
+  function stopMinimapDrag() {
+    minimapDragging = false;
+    minimapPointerId = null;
+  }
+
+  function handleMinimapPointerDown(event: PointerEvent) {
+    if (!minimapCanvas || event.button !== 0) return;
+    if (currentRange.min == null || currentRange.max == null) return;
+
+    minimapDragging = true;
+    minimapPointerId = event.pointerId;
+    minimapCanvas.setPointerCapture(event.pointerId);
+    scheduleMinimapPan(event.clientX);
+    event.preventDefault();
+  }
+
+  function handleMinimapPointerMove(event: PointerEvent) {
+    if (!minimapDragging) return;
+    if (minimapPointerId !== event.pointerId) return;
+    scheduleMinimapPan(event.clientX);
+    event.preventDefault();
+  }
+
+  function handleMinimapPointerUp(event: PointerEvent) {
+    if (!minimapDragging) return;
+    if (minimapPointerId !== event.pointerId) return;
+    minimapCanvas?.releasePointerCapture(event.pointerId);
+    stopMinimapDrag();
+  }
+
+  function handleMinimapPointerCancel(event: PointerEvent) {
+    if (minimapPointerId === event.pointerId) {
+      stopMinimapDrag();
+    }
+  }
+
   onMount(async () => {
     const res = await fetch('/data/rawTimestamps.json');
     const raw: number[] = await res.json();
@@ -384,6 +468,7 @@
   });
 
   onDestroy(() => {
+    if (minimapPanFrame) cancelAnimationFrame(minimapPanFrame);
     chart?.destroy();
   });
 </script>
@@ -417,7 +502,14 @@
   <div class="chart-area" class:hidden={loading}>
     <div bind:this={chartEl} class="chart-container"></div>
     {#if zoomed}
-      <canvas bind:this={minimapCanvas} class="minimap"></canvas>
+      <canvas
+        bind:this={minimapCanvas}
+        class="minimap"
+        onpointerdown={handleMinimapPointerDown}
+        onpointermove={handleMinimapPointerMove}
+        onpointerup={handleMinimapPointerUp}
+        onpointercancel={handleMinimapPointerCancel}
+      ></canvas>
     {/if}
   </div>
 </div>
@@ -535,7 +627,9 @@
     height: 40px;
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.4);
-    pointer-events: none;
+    pointer-events: auto;
+    touch-action: none;
+    cursor: grab;
 
     @media (max-width: 768px) {
       width: 100px;
