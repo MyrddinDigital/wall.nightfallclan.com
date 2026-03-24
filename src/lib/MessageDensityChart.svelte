@@ -132,6 +132,14 @@
   let minimapDragWindowSpan: number | null = null;
   let pendingMinimapClientX: number | null = null;
   let minimapPanFrame = 0;
+  let minimapVisible = $state(true);
+  let minimapFadeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function resetMinimapFadeTimer() {
+    minimapVisible = true;
+    if (minimapFadeTimer) clearTimeout(minimapFadeTimer);
+    minimapFadeTimer = setTimeout(() => { minimapVisible = false; }, 4000);
+  }
 
   function lowerBound(arr: number[], target: number): number {
     let lo = 0, hi = arr.length;
@@ -565,6 +573,7 @@
     if (!minimapCanvas || event.button !== 0) return;
     if (currentRange.min == null || currentRange.max == null) return;
 
+    resetMinimapFadeTimer();
     minimapDragWindowSpan = currentRange.max - currentRange.min;
     minimapDragging = true;
     minimapPointerId = event.pointerId;
@@ -576,6 +585,7 @@
   function handleMinimapPointerMove(event: PointerEvent) {
     if (!minimapDragging) return;
     if (minimapPointerId !== event.pointerId) return;
+    resetMinimapFadeTimer();
     scheduleMinimapPan(event.clientX);
     event.preventDefault();
   }
@@ -688,8 +698,18 @@
     refreshSeriesForResolution();
   });
 
+  $effect(() => {
+    if (zoomed) {
+      resetMinimapFadeTimer();
+    } else {
+      if (minimapFadeTimer) { clearTimeout(minimapFadeTimer); minimapFadeTimer = null; }
+      minimapVisible = true;
+    }
+  });
+
   onDestroy(() => {
     if (minimapPanFrame) cancelAnimationFrame(minimapPanFrame);
+    if (minimapFadeTimer) clearTimeout(minimapFadeTimer);
     chart?.destroy();
   });
 </script>
@@ -753,6 +773,7 @@
       <canvas
         bind:this={minimapCanvas}
         class="minimap"
+        class:faded={!minimapVisible}
         onpointerdown={handleMinimapPointerDown}
         onpointermove={handleMinimapPointerMove}
         onpointerup={handleMinimapPointerUp}
@@ -1024,6 +1045,12 @@
     pointer-events: auto;
     touch-action: none;
     cursor: grab;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+
+    &.faded {
+      opacity: 0;
+    }
 
     @media (max-width: 900px) {
       width: 180px;
