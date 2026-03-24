@@ -760,6 +760,7 @@
           max="200"
           step="1"
           bind:value={targetBuckets}
+          style="--fill: {((targetBuckets - 20) / (200 - 20)) * 100}%"
         />
       </label>
       <label class="filter-toggle">
@@ -1011,7 +1012,11 @@
         height: 6px;
         margin-block: 0.5rem;
         border-radius: 9999px;
-        background: rgba(255, 255, 255, 0.15);
+        background: linear-gradient(
+          to right,
+          rgb(108, 149, 255) var(--fill),
+          rgba(255, 255, 255, 0.15) var(--fill)
+        );
         outline: none;
 
         &::-webkit-slider-runnable-track {
@@ -1034,13 +1039,7 @@
         &::-moz-range-track {
           height: 6px;
           border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.15);
-        }
-
-        &::-moz-range-progress {
-          height: 6px;
-          border-radius: 9999px;
-          background: rgb(108, 149, 255);
+          background: transparent;
         }
 
         &::-moz-range-thumb {
