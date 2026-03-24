@@ -703,10 +703,33 @@
   {/if}
   {#if !loading}
     <div class="chart-controls">
-      <label class="filter-toggle">
-        <input type="checkbox" bind:checked={filterBanned} />
-        <span>Exclude banned accounts</span>
-      </label>
+      <div class="chart-btns">
+        <div class="zoom-btns">
+          <button class="chart-btn" onclick={() => zoomBy(2)} aria-label="Zoom out">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="chart-btn" onclick={() => zoomBy(0.5)} aria-label="Zoom in">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="chart-btn" onclick={resetZoom} aria-label="Reset zoom">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 12a9 9 0 1 1 3 6.7"/><polyline points="3 22 3 16 9 16"/></svg>
+          </button>
+        </div>
+        <button
+          class="view-posts-btn"
+          class:is-hidden={!zoomed}
+          onclick={viewPostsInCurrentRange}
+          disabled={!zoomed || navigatingToPosts}
+          aria-hidden={!zoomed}
+        >
+          {#if navigatingToPosts}
+            <span class="view-posts-btn__spinner" aria-hidden="true"></span>
+            Loading posts...
+          {:else}
+            View these posts
+          {/if}
+        </button>
+      </div>
       <label class="resolution-control" for="resolution-slider">
         <span>Resolution: {targetBuckets}</span>
         <input
@@ -718,31 +741,10 @@
           bind:value={targetBuckets}
         />
       </label>
-      <div class="chart-btns">
-      <button
-        class="view-posts-btn"
-        class:is-hidden={!zoomed}
-        onclick={viewPostsInCurrentRange}
-        disabled={!zoomed || navigatingToPosts}
-        aria-hidden={!zoomed}
-      >
-        {#if navigatingToPosts}
-          <span class="view-posts-btn__spinner" aria-hidden="true"></span>
-          Loading posts...
-        {:else}
-          View these posts
-        {/if}
-      </button>
-        <button class="chart-btn" onclick={() => zoomBy(0.5)} aria-label="Zoom in">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-      <button class="chart-btn" onclick={() => zoomBy(2)} aria-label="Zoom out">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-      <button class="chart-btn" onclick={resetZoom} aria-label="Reset zoom">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><path d="M3 12a9 9 0 1 1 3 6.7"/><polyline points="3 22 3 16 9 16"/></svg>
-      </button>
-      </div>
+      <label class="filter-toggle">
+        <input type="checkbox" bind:checked={filterBanned} />
+        <span>Exclude banned accounts</span>
+      </label>
     </div>
   {/if}
   <div class="chart-area" class:hidden={loading}>
@@ -808,6 +810,7 @@
   }
 
   .filter-toggle {
+    order: 1;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -823,6 +826,7 @@
   }
 
   .resolution-control {
+    order: 2;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -835,15 +839,25 @@
       accent-color: rgb(108, 149, 255);
       cursor: pointer;
 
-      @media (max-width: 768px) {
+      @media (max-width: 900px) {
         width: 120px;
       }
     }
   }
 
   .chart-btns {
+    order: 3;
     display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .zoom-btns {
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
+    order: 2;
   }
 
   .chart-btn {
@@ -859,7 +873,7 @@
     align-items: center;
     justify-content: center;
 
-    @media (min-width: 768px) {
+    @media (min-width: 901px) {
       width: 32px;
       height: 32px;
       font-size: 1rem;
@@ -868,6 +882,7 @@
   }
 
   .view-posts-btn {
+    order: 1;
     border: none;
     border-radius: 9999px;
     background: rgb(108, 149, 255);
@@ -916,6 +931,64 @@
     }
   }
 
+  @media (max-width: 900px) {
+    .chart-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .chart-area {
+      order: 1;
+    }
+
+    .chart-controls {
+      order: 2;
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 0.75rem;
+      padding: 0 0.5rem;
+      margin-bottom: 0;
+    }
+
+    .filter-toggle {
+      order: 3;
+      justify-self: start;
+    }
+
+    .resolution-control {
+      order: 2;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+      justify-items: start;
+
+      input {
+        width: 100%;
+        max-width: none;
+      }
+    }
+
+    .chart-btns {
+      order: 1;
+      width: 100%;
+      gap: 0.5rem;
+    }
+
+    .zoom-btns {
+      order: 1;
+      justify-content: flex-start;
+      flex-shrink: 0;
+    }
+
+    .view-posts-btn {
+      order: 2;
+      margin-left: auto;
+    }
+  }
+
   .chart-container {
     position: absolute;
     inset: 0;
@@ -932,7 +1005,7 @@
     touch-action: none;
     cursor: grab;
 
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       width: 100px;
       height: 28px;
     }
