@@ -4,3 +4,12 @@ name = "wall.nightfallclan.com"
 
 [setup]
 script = "npm i"
+script = ""
+
+[[actions]]
+name = "Run"
+icon = "run"
+command = '''
+npm ci
+npm run dev
+'''
