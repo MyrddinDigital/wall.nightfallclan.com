@@ -20,8 +20,8 @@
   }
 
   function clampTargetBuckets(value: unknown): number {
-    if (!isFiniteNumber(value)) return 10;
-    return Math.min(500, Math.max(5, Math.round(value)));
+    if (!isFiniteNumber(value)) return 20;
+    return Math.min(200, Math.max(20, Math.round(value)));
   }
 
   function parseGraphHistoryState(raw: unknown): PartialGraphHistoryState | null {
@@ -735,8 +735,8 @@
         <input
           id="resolution-slider"
           type="range"
-          min="5"
-          max="500"
+          min="20"
+          max="200"
           step="1"
           bind:value={targetBuckets}
         />
