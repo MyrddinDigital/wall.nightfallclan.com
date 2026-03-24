@@ -88,6 +88,7 @@
   let filteredTimestamps: number[] | null = null;
   let filteredTimestampsPromise: Promise<number[]> | null = null;
   let currentRange: { min?: number; max?: number } = {};
+  let currentViewRange: { min?: number; max?: number } = {};
   let currentIntervalMs = 0;
   const ZOOM_EPSILON_MS = 1;
   let lastAppliedFilterBanned: boolean | null = null;
@@ -164,22 +165,16 @@
     );
   }
 
-  function formatDateForSearch(ts: number): string {
-    const date = new Date(ts);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
+  function formatTimestampForSearch(ts: number): string {
+    return new Date(ts).toISOString();
   }
 
   function viewPostsInCurrentRange() {
-    if (!hasNonZeroZoom(currentRange) || currentRange.min == null || currentRange.max == null) return;
+    if (!hasNonZeroZoom(currentRange) || currentViewRange.min == null || currentViewRange.max == null) return;
 
-    const after = formatDateForSearch(currentRange.min);
-    const before = formatDateForSearch(currentRange.max);
-    const searchQuery = after === before
-      ? `during:${after}`
-      : `after:${after} before:${before}`;
+    const after = formatTimestampForSearch(currentViewRange.min);
+    const before = formatTimestampForSearch(currentViewRange.max);
+    const searchQuery = `after:${after} before:${before}`;
     const params = new URLSearchParams({ search: searchQuery });
 
     persistGraphHistoryState();
@@ -269,6 +264,7 @@
     max: number; // Actual data range used for bucketing
     viewMin: number; // Plotted x-axis bounds (bucket timestamps)
     viewMax: number; // Plotted x-axis bounds (bucket timestamps)
+    viewEnd: number; // End timestamp for the plotted range (exclusive)
   };
 
   function buildSeries(rangeStart?: number, rangeEnd?: number): BuiltSeries {
@@ -287,7 +283,9 @@
     debugRange = `${formatDuration(rangeMs)} · ${intervalLabel(interval)} · ${data.length} pts`;
     const viewMin = data[0]?.[0] ?? min;
     const viewMax = data[data.length - 1]?.[0] ?? max;
-    return { data, min, max, viewMin, viewMax };
+    const viewEnd = viewMax + interval;
+    currentViewRange = { min: viewMin, max: viewEnd };
+    return { data, min, max, viewMin, viewMax, viewEnd };
   }
 
   function pickInterval(rangeMs: number): number {
