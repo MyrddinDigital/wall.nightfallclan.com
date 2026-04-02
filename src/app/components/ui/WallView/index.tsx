@@ -21,7 +21,11 @@ import styles from "./WallView.module.scss";
 const POSTS_PER_LOAD = 20;
 const SKELETON_COUNT = 15;
 
-export default function WallView() {
+type WallViewProps = {
+  onLatestDateShownChange?: (timestamp: number) => void;
+};
+
+export default function WallView({ onLatestDateShownChange }: WallViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { inputValue, setInputValue, loading, setLoading } = useSearch();
@@ -30,6 +34,7 @@ export default function WallView() {
   const [visibleStartIndex, setVisibleStartIndex] = useState(0);
   const [visibleEndIndex, setVisibleEndIndex] = useState(POSTS_PER_LOAD);
   const [highlightedPostId, setHighlightedPostId] = useState(0);
+  const latestDateShownRef = useRef<number | null>(null);
 
   const { scrollDirection } = useScrollDirection();
   const { query, queryUser, dateFilter } = useSearchParser(inputValue);
@@ -161,6 +166,75 @@ export default function WallView() {
     visibleEndIndex < filteredPosts.length,
     handleLoadBottom
   );
+
+  useEffect(() => {
+    if (!onLatestDateShownChange || loading || currentPagePosts.length === 0) return;
+
+    let rafId: number | null = null;
+
+    const updateLatestDateShown = () => {
+      const viewportBottom = window.innerHeight;
+      let selectedCreated: string | null = null;
+      let topMostAtOrAboveBottom = -Infinity;
+      let firstBelowBottom: { top: number; created: string } | null = null;
+
+      for (const post of currentPagePosts) {
+        const element = document.getElementById(`post-${post.id}`);
+        if (!element) continue;
+
+        const rect = element.getBoundingClientRect();
+        const intersectsViewportBottom =
+          rect.top <= viewportBottom && rect.bottom >= viewportBottom;
+
+        if (intersectsViewportBottom) {
+          selectedCreated = post.created;
+          break;
+        }
+
+        if (rect.top <= viewportBottom && rect.top > topMostAtOrAboveBottom) {
+          topMostAtOrAboveBottom = rect.top;
+          selectedCreated = post.created;
+        } else if (
+          rect.top > viewportBottom &&
+          (!firstBelowBottom || rect.top < firstBelowBottom.top)
+        ) {
+          firstBelowBottom = { top: rect.top, created: post.created };
+        }
+      }
+
+      if (!selectedCreated && firstBelowBottom) {
+        selectedCreated = firstBelowBottom.created;
+      }
+
+      if (!selectedCreated) return;
+
+      const timestamp = Date.parse(selectedCreated);
+      if (Number.isNaN(timestamp) || latestDateShownRef.current === timestamp) return;
+
+      latestDateShownRef.current = timestamp;
+      onLatestDateShownChange(timestamp);
+    };
+
+    const scheduleUpdate = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        updateLatestDateShown();
+      });
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [currentPagePosts, loading, onLatestDateShownChange]);
 
   function jumpToOldest() {
     setVisibleStartIndex(0);
