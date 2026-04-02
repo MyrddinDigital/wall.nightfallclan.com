@@ -113,8 +113,6 @@ const descriptions = {
   [NEWS]- Friendly War with RSF, IL and UCR. Hardcore war with RoC and CE.
   `,
 
-
-
 }
 
 const ranks = {
@@ -131,6 +129,7 @@ export default function GroupBio() {
   const [currentOwner, setCurrentOwner] = useState(owners['2010-03-10']);
   const [currentMembers, setCurrentMembers] = useState(members['2010-03-06']);
   const [currentDescription, setCurrentDescription] = useState(descriptions['2010-04-11']);
+  const [currentRanks, setCurrentRanks] = useState(ranks['2010-03-10']); // not displayed currently
 
   return (
     <aside className={styles.component}>
