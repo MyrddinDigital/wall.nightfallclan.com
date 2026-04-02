@@ -1,0 +1,50 @@
+.main {
+  max-width: 550px;
+  width: 85vw;
+  margin-bottom: 50px;
+}
+
+.sentinel {
+  height: 1px;
+}
+
+.postCount p {
+  margin-top: 0;
+}
+
+.jumpButton {
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+  position: fixed;
+  margin: 0 auto;
+  transform: translateX(-50%);
+  z-index: 5;
+  background-color: white;
+  color: #1e1e1e;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.jumpButton--top {
+  top: 5rem;
+
+  &.hidden {
+    transform: translateX(-50%) translateY(-200%);
+  }
+}
+
+.jumpButton--bottom {
+  bottom: 1rem;
+
+  &.hidden {
+    transform: translateX(-50%) translateY(200%);
+  }
+}

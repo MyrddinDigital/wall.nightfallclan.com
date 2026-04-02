@@ -1,27 +1,25 @@
 {
   "name": "wall.nightfallclan.com",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json"
-  },
-  "devDependencies": {
-    "@netlify/functions": "^3.1.10",
-    "@sveltejs/vite-plugin-svelte": "^5.0.3",
-    "@tsconfig/svelte": "^5.0.4",
-    "rollup": "^4.44.0",
-    "sass": "^1.89.2",
-    "svelte": "^5.28.1",
-    "svelte-check": "^4.4.5",
-    "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "deploy:prod": "sst deploy --stage prod"
   },
   "dependencies": {
-    "@types/node": "^22.15.32",
-    "apexcharts": "^5.10.4"
+    "apexcharts": "^5.10.4",
+    "next": "^16.2.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "sass": "^1.89.2",
+    "typescript": "^6.0.2"
   }
 }
