@@ -1,5 +1,7 @@
 "use client";
 
+import type { TouchEvent } from "react";
+import { GroupBioIcon } from "@icons";
 import { useEffect, useState } from "react";
 import { sanitizeText } from "@/app/utils/sanitize";
 import styles from "./GroupBio.module.scss";
@@ -218,6 +220,10 @@ function useSwapTransition<T>(value: T, durationMs: number): TransitionState<T> 
 }
 
 export default function GroupBio({ latestDateShown }: { latestDateShown?: number | null }) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  
   const [resolvedLatestDateShown, setResolvedLatestDateShown] = useState(DEFAULT_LATEST_DATE_SHOWN);
   const [currentLogo, setCurrentLogo] = useState(logos['2010-03-10']);
   const [currentFort, setCurrentFort] = useState(forts['2010-03-10']);
@@ -245,6 +251,22 @@ export default function GroupBio({ latestDateShown }: { latestDateShown?: number
   const ownerTransition = useSwapTransition(currentOwner, 360);
   const descriptionTransition = useSwapTransition(currentDescription, 520);
 
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    const touch = event.changedTouches[0];
+    setTouchStartX(touch.clientX);
+    setTouchStartY(touch.clientY);
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    if (touchStartX == null || touchStartY == null) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = Math.abs(touch.clientY - touchStartY);
+    const isHorizontalSwipe = Math.abs(deltaX) > deltaY * 1.2;
+    const shouldClose = deltaX > 70 && isHorizontalSwipe;
+  }
+  
   return (
     <aside className={styles.component}>
       <div className={styles.header}>
@@ -303,12 +325,71 @@ export default function GroupBio({ latestDateShown }: { latestDateShown?: number
             </div>
           </div>
 
-          <div className={styles.detail}>
-            <span className={styles.label}>Members</span>
-            <span className={styles.value}>{currentMembers.toLocaleString()}</span>
+    if (shouldClose) {
+      setIsDrawerOpen(false);
+    }
+
+    setTouchStartX(null);
+    setTouchStartY(null);
+  }
+
+  function resetTouchState() {
+    setTouchStartX(null);
+    setTouchStartY(null);
+  }
+
+  return (
+    <>
+      <button
+        className={`${styles.mobileDrawerToggle} ${isDrawerOpen ? styles.mobileDrawerToggleHidden : ""}`}
+        type="button"
+        aria-label="Open group bio"
+        aria-expanded={isDrawerOpen}
+        aria-controls="group-bio-panel"
+        onClick={() => setIsDrawerOpen(true)}
+      >
+        <GroupBioIcon className={styles.mobileDrawerIcon} />
+      </button>
+
+      <button
+        className={`${styles.backdrop} ${isDrawerOpen ? styles.backdropVisible : ""}`}
+        type="button"
+        aria-label="Close group bio"
+        tabIndex={isDrawerOpen ? 0 : -1}
+        onClick={() => setIsDrawerOpen(false)}
+      />
+
+      <aside
+        id="group-bio-panel"
+        className={`${styles.component} ${isDrawerOpen ? styles.mobileOpen : ""}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={resetTouchState}
+      >
+        <div className={styles.header}>
+          <img className={styles.fort} src={currentFort} />
+          <img className={styles.logo} src={currentLogo} />
+
+          <div className={styles.details}>
+            <div className={styles.detail}>
+              <span className={styles.label}>Owner</span>
+              <span className={styles.value}>{currentOwner}</span>
+            </div>
+
+            <div className={styles.detail}>
+              <span className={styles.label}>Members</span>
+              <span className={styles.value}>{currentMembers.toLocaleString()}</span>
+            </div>
           </div>
         </div>
 
+        <p
+          id="group-bio-description"
+          className={styles.description}
+          dangerouslySetInnerHTML={{ __html: sanitizeText(currentDescription) }}
+        />
+      </aside>
+    </>
       </div>
       <div className={styles.descriptionSwap}>
         <p
