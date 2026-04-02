@@ -3,12 +3,12 @@ version = 1
 name = "wall.nightfallclan.com"
 
 [setup]
-script = ""
+script = '''
+cd "$CODEX_WORKTREE_PATH"
+npm ci
+'''
 
 [[actions]]
 name = "Run"
 icon = "run"
-command = '''
-npm i
-npm run dev
-'''
+command = "npm run dev"
