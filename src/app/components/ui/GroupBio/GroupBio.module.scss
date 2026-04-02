@@ -41,8 +41,8 @@
 
 .mobileDrawerToggle {
   position: fixed;
-  right: 12px;
-  bottom: 20px;
+  right: 15px;
+  bottom: 14px;
   z-index: 26;
   width: 42px;
   height: 42px;
@@ -234,7 +234,6 @@
   overflow-x: hidden;
 
   @media (min-width: 1000px) {
-    max-height: 303px;
     position: absolute;
     inset: 0;
     overflow-y: scroll;
