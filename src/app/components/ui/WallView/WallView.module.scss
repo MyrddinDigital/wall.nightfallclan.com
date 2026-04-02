@@ -12,19 +12,14 @@
   margin-top: 0;
 }
 
-.jumpButton {
-  font-family: Helvetica, Arial, sans-serif;
-  font-weight: bold;
+.jumpButtonGroup {
   position: fixed;
+  left: 50%;
+  display: flex;
+  gap: 0.5rem;
   margin: 0 auto;
   transform: translateX(-50%);
   z-index: 5;
-  background-color: white;
-  color: #1e1e1e;
-  border: none;
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
   transition: all 0.3s ease-in-out;
 
   &.hidden {
@@ -33,7 +28,35 @@
   }
 }
 
-.jumpButton--top {
+.jumpButton {
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+  background-color: white;
+  color: #1e1e1e;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.jumpButton--icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.jumpIcon {
+  display: block;
+  shape-rendering: geometricPrecision;
+}
+
+.jumpButtonGroup--top {
   top: 5rem;
 
   &.hidden {
@@ -41,7 +64,7 @@
   }
 }
 
-.jumpButton--bottom {
+.jumpButtonGroup--bottom {
   bottom: 1rem;
 
   &.hidden {

@@ -19,17 +19,90 @@ import { sanitizePosts, type Post, type SanitizedPost } from "@/app/utils/saniti
 import styles from "./WallView.module.scss";
 
 const POSTS_PER_LOAD = 20;
+const POSTS_PER_SKIP_SMALL = 100;
+const POSTS_PER_SKIP_LARGE = 1000;
 const SKELETON_COUNT = 15;
 
-export default function WallView() {
+type WallViewProps = {
+  onLatestDateShownChange?: (timestamp: number) => void;
+};
+
+function SkipArrowIcon({
+  direction,
+  hasSecondChevron,
+}: {
+  direction: "up" | "down";
+  hasSecondChevron: boolean;
+}) {
+  const isUp = direction === "up";
+  const stemPath = hasSecondChevron
+    ? isUp
+      ? "M10 17V9"
+      : "M10 3V11"
+    : isUp
+      ? "M10 15V8"
+      : "M10 5V12";
+  const firstChevronPath = hasSecondChevron
+    ? isUp
+      ? "M6 11L10 7L14 11"
+      : "M6 9L10 13L14 9"
+    : isUp
+      ? "M6 9L10 5L14 9"
+      : "M6 11L10 15L14 11";
+
+  return (
+    <svg
+      className={styles.jumpIcon}
+      width="18"
+      height="18"
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d={stemPath}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        d={firstChevronPath}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      {hasSecondChevron && (
+        <path
+          d={isUp ? "M6 7L10 3L14 7" : "M6 13L10 17L14 13"}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      )}
+    </svg>
+  );
+}
+
+export default function WallView({ onLatestDateShownChange }: WallViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { inputValue, setInputValue, loading, setLoading } = useSearch();
+  const mainRef = useRef<HTMLElement | null>(null);
+  const [jumpButtonGroupLeft, setJumpButtonGroupLeft] = useState<number | null>(null);
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [visibleStartIndex, setVisibleStartIndex] = useState(0);
   const [visibleEndIndex, setVisibleEndIndex] = useState(POSTS_PER_LOAD);
   const [highlightedPostId, setHighlightedPostId] = useState(0);
+  const latestDateShownRef = useRef<number | null>(null);
 
   const { scrollDirection } = useScrollDirection();
   const { query, queryUser, dateFilter } = useSearchParser(inputValue);
@@ -162,6 +235,105 @@ export default function WallView() {
     handleLoadBottom
   );
 
+  useEffect(() => {
+    if (!onLatestDateShownChange || loading || currentPagePosts.length === 0) return;
+
+    let rafId: number | null = null;
+
+    const updateLatestDateShown = () => {
+      const viewportBottom = window.innerHeight;
+      let selectedCreated: string | null = null;
+      let topMostAtOrAboveBottom = -Infinity;
+      let firstBelowBottom: { top: number; created: string } | null = null;
+
+      for (const post of currentPagePosts) {
+        const element = document.getElementById(`post-${post.id}`);
+        if (!element) continue;
+
+        const rect = element.getBoundingClientRect();
+        const intersectsViewportBottom =
+          rect.top <= viewportBottom && rect.bottom >= viewportBottom;
+
+        if (intersectsViewportBottom) {
+          selectedCreated = post.created;
+          break;
+        }
+
+        if (rect.top <= viewportBottom && rect.top > topMostAtOrAboveBottom) {
+          topMostAtOrAboveBottom = rect.top;
+          selectedCreated = post.created;
+        } else if (
+          rect.top > viewportBottom &&
+          (!firstBelowBottom || rect.top < firstBelowBottom.top)
+        ) {
+          firstBelowBottom = { top: rect.top, created: post.created };
+        }
+      }
+
+      if (!selectedCreated && firstBelowBottom) {
+        selectedCreated = firstBelowBottom.created;
+      }
+
+      if (!selectedCreated) return;
+
+      const timestamp = Date.parse(selectedCreated);
+      if (Number.isNaN(timestamp) || latestDateShownRef.current === timestamp) return;
+
+      latestDateShownRef.current = timestamp;
+      onLatestDateShownChange(timestamp);
+    };
+
+    const scheduleUpdate = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        updateLatestDateShown();
+      });
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [currentPagePosts, loading, onLatestDateShownChange]);
+
+  useLayoutEffect(() => {
+    const mainElement = mainRef.current;
+    if (!mainElement) return;
+
+    const updateJumpButtonGroupLeft = () => {
+      const rect = mainElement.getBoundingClientRect();
+      const nextLeft = rect.left + rect.width / 2;
+      setJumpButtonGroupLeft((current) => {
+        if (current !== null && Math.abs(current - nextLeft) < 0.5) {
+          return current;
+        }
+        return nextLeft;
+      });
+    };
+
+    updateJumpButtonGroupLeft();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(updateJumpButtonGroupLeft);
+      resizeObserver.observe(mainElement);
+    }
+
+    window.addEventListener("resize", updateJumpButtonGroupLeft);
+    return () => {
+      window.removeEventListener("resize", updateJumpButtonGroupLeft);
+      resizeObserver?.disconnect();
+    };
+  }, []);
+
   function jumpToOldest() {
     setVisibleStartIndex(0);
     setVisibleEndIndex(POSTS_PER_LOAD);
@@ -173,6 +345,36 @@ export default function WallView() {
   function jumpToNewest() {
     setVisibleStartIndex(Math.max(0, filteredPosts.length - POSTS_PER_LOAD));
     setVisibleEndIndex(filteredPosts.length);
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: "smooth",
+      });
+    }, 50);
+  }
+
+  function skipPosts(offset: number) {
+    if (offset === 0 || filteredPosts.length === 0) return;
+
+    const currentWindowSize = Math.max(POSTS_PER_LOAD, visibleEndIndex - visibleStartIndex);
+
+    if (offset < 0) {
+      if (visibleStartIndex <= 0) return;
+      const nextStart = Math.max(0, visibleStartIndex + offset);
+      const nextEnd = Math.min(filteredPosts.length, nextStart + currentWindowSize);
+      setVisibleStartIndex(nextStart);
+      setVisibleEndIndex(nextEnd);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 50);
+      return;
+    }
+
+    if (visibleEndIndex >= filteredPosts.length) return;
+    const nextEnd = Math.min(filteredPosts.length, visibleEndIndex + offset);
+    const nextStart = Math.max(0, nextEnd - currentWindowSize);
+    setVisibleStartIndex(nextStart);
+    setVisibleEndIndex(nextEnd);
     setTimeout(() => {
       window.scrollTo({
         top: document.documentElement.scrollHeight,
@@ -232,14 +434,32 @@ export default function WallView() {
 
   return (
     <div>
-      <main className={styles.main}>
+      <main ref={mainRef} className={styles.main}>
         {showJumpToOldest && !loading && (
-          <button
-            className={`${styles.jumpButton} ${styles["jumpButton--top"]} ${scrollDirection === "down" ? styles.hidden : ""}`}
-            onClick={jumpToOldest}
+          <div
+            className={`${styles.jumpButtonGroup} ${styles["jumpButtonGroup--top"]} ${scrollDirection === "down" ? styles.hidden : ""}`}
+            style={jumpButtonGroupLeft === null ? undefined : { left: jumpButtonGroupLeft }}
           >
-            Jump To Oldest
-          </button>
+            <button
+              className={`${styles.jumpButton} ${styles["jumpButton--icon"]}`}
+              onClick={() => skipPosts(-POSTS_PER_SKIP_LARGE)}
+              aria-label="Skip back 1000 posts"
+              title="Skip back 1000 posts"
+            >
+              <SkipArrowIcon direction="up" hasSecondChevron />
+            </button>
+            <button
+              className={`${styles.jumpButton} ${styles["jumpButton--icon"]}`}
+              onClick={() => skipPosts(-POSTS_PER_SKIP_SMALL)}
+              aria-label="Skip back 100 posts"
+              title="Skip back 100 posts"
+            >
+              <SkipArrowIcon direction="up" hasSecondChevron={false} />
+            </button>
+            <button className={styles.jumpButton} onClick={jumpToOldest}>
+              Jump To Oldest
+            </button>
+          </div>
         )}
 
         <div className={styles.postCount}>
@@ -295,12 +515,30 @@ export default function WallView() {
         )}
 
         {showJumpToNewest && !loading && (
-          <button
-            className={`${styles.jumpButton} ${styles["jumpButton--bottom"]} ${scrollDirection === "up" ? styles.hidden : ""}`}
-            onClick={jumpToNewest}
+          <div
+            className={`${styles.jumpButtonGroup} ${styles["jumpButtonGroup--bottom"]} ${scrollDirection === "up" ? styles.hidden : ""}`}
+            style={jumpButtonGroupLeft === null ? undefined : { left: jumpButtonGroupLeft }}
           >
-            Jump To Newest
-          </button>
+            <button className={styles.jumpButton} onClick={jumpToNewest}>
+              Jump To Newest
+            </button>
+            <button
+              className={`${styles.jumpButton} ${styles["jumpButton--icon"]}`}
+              onClick={() => skipPosts(POSTS_PER_SKIP_SMALL)}
+              aria-label="Skip ahead 100 posts"
+              title="Skip ahead 100 posts"
+            >
+              <SkipArrowIcon direction="down" hasSecondChevron={false} />
+            </button>
+            <button
+              className={`${styles.jumpButton} ${styles["jumpButton--icon"]}`}
+              onClick={() => skipPosts(POSTS_PER_SKIP_LARGE)}
+              aria-label="Skip ahead 1000 posts"
+              title="Skip ahead 1000 posts"
+            >
+              <SkipArrowIcon direction="down" hasSecondChevron />
+            </button>
+          </div>
         )}
       </main>
     </div>

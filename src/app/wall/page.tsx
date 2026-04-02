@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import WallView from "@ui/WallView";
-import GroupBio from "@ui/GroupBio";
+import WallPageContent from "./WallPageContent";
 
 export const metadata: Metadata = {
   title: "Wall Archive | Nightfall Clan",
@@ -9,13 +8,8 @@ export const metadata: Metadata = {
 
 export default function WallPage() {
   return (
-    <>
-      <div className="wall-page-body">
-        <Suspense>
-          <WallView />
-        </Suspense>
-        <GroupBio />
-      </div>
-    </>
+    <Suspense>
+      <WallPageContent />
+    </Suspense>
   );
 }

@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import type { TouchEvent } from "react";
 import { GroupBioIcon } from "@icons";
+import { useEffect, useState } from "react";
 import { sanitizeText } from "@/app/utils/sanitize";
 import styles from "./GroupBio.module.scss";
+
+type Timeline<T> = Record<string, T>;
+type TransitionState<T> = {
+  displayedValue: T;
+  outgoingValue: T | null;
+  isTransitioning: boolean;
+  transitionKey: number;
+};
 
 const logos = {
   '2010-03-10': '/logos/2010.png',
@@ -55,9 +63,7 @@ const members = {
 }
 
 const descriptions = {
-  '2010-03-10': 'Unknown',
-
-  '2010-04-11': `
+  '2010-03-10': `
   "Fight for freedom, live for justice!" Join the NFC today! We are a powerful modern military clan and we fight with our allies for peace, freedom, and justice throughout all of ROBLOXia. ================================= Uniform [Shirt]: http://www.roblox.com/Nightfall-Clan-Uniform-item?id=25259205 ================================= Uniform [Pants]:http://www.roblox.com/Nightfall-Clan-Uniform-Pants-item?id=22895686 ================================= Head Quarters: http://www.roblox.com/Nightfall-Clan-Official-HQ-item?id=2627273 ================================= Promotion Information: http://www.roblox.com/Forum/ShowPost.aspx?PostID=23986257 ================================ Enemies: REF ================================ Allies: RAT, UCR, Frost Clan, Burn Clan, RoXzon, United VroX, M INC, ES, RAD, CRO, and many other smaller clans. ================================= Neutral: FEAR, X-101st
   `,
 
@@ -115,8 +121,6 @@ const descriptions = {
   [NEWS]- Friendly War with RSF, IL and UCR. Hardcore war with RoC and CE.
   `,
 
-
-
 }
 
 const ranks = {
@@ -127,15 +131,125 @@ const ranks = {
   '2011-11-04': ['Warrior', 'Guard', 'Knight', 'Crusader', 'Dark Paladin', 'Warlord', 'Grand', 'Council', 'Chancellor']
 }
 
-export default function GroupBio() {
+const DEFAULT_LATEST_DATE_SHOWN = Date.parse('2010-03-10');
+
+function resolveTimelineValue<T>(timeline: Timeline<T>, timestamp: number, fallbackKey: string): T {
+  const sortedEntries = Object.entries(timeline)
+    .map(([date, value]) => ({ timestamp: Date.parse(date), value }))
+    .filter((entry) => !Number.isNaN(entry.timestamp))
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  let resolvedValue = timeline[fallbackKey];
+  for (const entry of sortedEntries) {
+    if (entry.timestamp > timestamp) break;
+    resolvedValue = entry.value;
+  }
+
+  return resolvedValue;
+}
+
+function resolveInterpolatedTimelineValue(
+  timeline: Timeline<number>,
+  timestamp: number,
+  fallbackKey: string
+): number {
+  const sortedEntries = Object.entries(timeline)
+    .map(([date, value]) => ({ timestamp: Date.parse(date), value }))
+    .filter((entry) => !Number.isNaN(entry.timestamp))
+    .sort((a, b) => a.timestamp - b.timestamp);
+
+  if (sortedEntries.length === 0) {
+    return timeline[fallbackKey];
+  }
+
+  if (timestamp <= sortedEntries[0].timestamp) {
+    return sortedEntries[0].value;
+  }
+
+  const lastEntry = sortedEntries[sortedEntries.length - 1];
+  if (timestamp >= lastEntry.timestamp) {
+    return lastEntry.value;
+  }
+
+  for (let i = 0; i < sortedEntries.length - 1; i += 1) {
+    const startEntry = sortedEntries[i];
+    const endEntry = sortedEntries[i + 1];
+
+    if (timestamp < startEntry.timestamp || timestamp >= endEntry.timestamp) {
+      continue;
+    }
+
+    const range = endEntry.timestamp - startEntry.timestamp;
+    if (range <= 0) {
+      return startEntry.value;
+    }
+
+    const progress = (timestamp - startEntry.timestamp) / range;
+    return Math.round(startEntry.value + (endEntry.value - startEntry.value) * progress);
+  }
+
+  return timeline[fallbackKey];
+}
+
+function useSwapTransition<T>(value: T, durationMs: number): TransitionState<T> {
+  const [displayedValue, setDisplayedValue] = useState(value);
+  const [outgoingValue, setOutgoingValue] = useState<T | null>(null);
+  const [transitionKey, setTransitionKey] = useState(0);
+
+  useEffect(() => {
+    if (Object.is(value, displayedValue)) return;
+
+    setOutgoingValue(displayedValue);
+    setDisplayedValue(value);
+    setTransitionKey((previousKey) => previousKey + 1);
+    const timeoutId = window.setTimeout(() => {
+      setOutgoingValue(null);
+    }, durationMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [value, displayedValue, durationMs]);
+
+  return {
+    displayedValue,
+    outgoingValue,
+    isTransitioning: outgoingValue !== null,
+    transitionKey,
+  };
+}
+
+export default function GroupBio({ latestDateShown }: { latestDateShown?: number | null }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
+  
+  const [resolvedLatestDateShown, setResolvedLatestDateShown] = useState(DEFAULT_LATEST_DATE_SHOWN);
   const [currentLogo, setCurrentLogo] = useState(logos['2010-03-10']);
   const [currentFort, setCurrentFort] = useState(forts['2010-03-10']);
   const [currentOwner, setCurrentOwner] = useState(owners['2010-03-10']);
   const [currentMembers, setCurrentMembers] = useState(members['2010-03-06']);
-  const [currentDescription, setCurrentDescription] = useState(descriptions['2010-04-11']);
+  const [currentDescription, setCurrentDescription] = useState(descriptions['2010-03-10']);
+  const [currentRanks, setCurrentRanks] = useState(ranks['2010-03-10']); // not displayed currently
+
+  useEffect(() => {
+    if (typeof latestDateShown !== 'number' || Number.isNaN(latestDateShown)) return;
+    setResolvedLatestDateShown(latestDateShown);
+  }, [latestDateShown]);
+
+  useEffect(() => {
+    setCurrentLogo(resolveTimelineValue(logos, resolvedLatestDateShown, '2010-03-10'));
+    setCurrentFort(resolveTimelineValue(forts, resolvedLatestDateShown, '2010-03-10'));
+    setCurrentOwner(resolveTimelineValue(owners, resolvedLatestDateShown, '2010-03-10'));
+    setCurrentMembers(resolveInterpolatedTimelineValue(members, resolvedLatestDateShown, '2010-03-06'));
+    setCurrentDescription(resolveTimelineValue(descriptions, resolvedLatestDateShown, '2010-04-11'));
+    setCurrentRanks(resolveTimelineValue(ranks, resolvedLatestDateShown, '2010-03-10'));
+  }, [resolvedLatestDateShown]);
+
+  const logoTransition = useSwapTransition(currentLogo, 420);
+  const fortTransition = useSwapTransition(currentFort, 520);
+  const ownerTransition = useSwapTransition(currentOwner, 360);
+  const descriptionTransition = useSwapTransition(currentDescription, 520);
 
   function handleTouchStart(event: TouchEvent<HTMLElement>) {
     const touch = event.changedTouches[0];
@@ -151,6 +265,65 @@ export default function GroupBio() {
     const deltaY = Math.abs(touch.clientY - touchStartY);
     const isHorizontalSwipe = Math.abs(deltaX) > deltaY * 1.2;
     const shouldClose = deltaX > 70 && isHorizontalSwipe;
+  }
+  
+  return (
+    <aside className={styles.component}>
+      <div className={styles.header}>
+        <div className={styles.fortSwap}>
+          <img
+            key={`fort-in-${fortTransition.transitionKey}`}
+            className={`${styles.fortLayer} ${fortTransition.isTransitioning ? styles.fortIncoming : ""}`}
+            src={fortTransition.displayedValue}
+            alt=""
+          />
+          {fortTransition.outgoingValue && (
+            <img
+              key={`fort-out-${fortTransition.transitionKey}`}
+              className={`${styles.fortLayer} ${styles.fortOutgoing}`}
+              src={fortTransition.outgoingValue}
+              alt=""
+            />
+          )}
+        </div>
+
+        <div className={styles.logoSwap}>
+          <img
+            key={`logo-in-${logoTransition.transitionKey}`}
+            className={`${styles.logoLayer} ${logoTransition.isTransitioning ? styles.logoIncoming : ""}`}
+            src={logoTransition.displayedValue}
+            alt=""
+          />
+          {logoTransition.outgoingValue && (
+            <img
+              key={`logo-out-${logoTransition.transitionKey}`}
+              className={`${styles.logoLayer} ${styles.logoOutgoing}`}
+              src={logoTransition.outgoingValue}
+              alt=""
+            />
+          )}
+        </div>
+
+        <div className={styles.details}>
+          <div className={styles.detail}>
+            <span className={styles.label}>Owner</span>
+            <div className={styles.valueSwap}>
+              <span
+                key={`owner-in-${ownerTransition.transitionKey}`}
+                className={`${styles.valueLayer} ${ownerTransition.isTransitioning ? styles.valueIncoming : ""}`}
+              >
+                {ownerTransition.displayedValue}
+              </span>
+              {ownerTransition.outgoingValue && (
+                <span
+                  key={`owner-out-${ownerTransition.transitionKey}`}
+                  className={`${styles.valueLayer} ${styles.valueOutgoing}`}
+                >
+                  {ownerTransition.outgoingValue}
+                </span>
+              )}
+            </div>
+          </div>
 
     if (shouldClose) {
       setIsDrawerOpen(false);
@@ -217,5 +390,21 @@ export default function GroupBio() {
         />
       </aside>
     </>
+      </div>
+      <div className={styles.descriptionSwap}>
+        <p
+          key={`description-in-${descriptionTransition.transitionKey}`}
+          className={`${styles.descriptionBody} ${descriptionTransition.isTransitioning ? styles.descriptionIncoming : ""}`}
+          dangerouslySetInnerHTML={{ __html: sanitizeText(descriptionTransition.displayedValue) }}
+        />
+        {descriptionTransition.outgoingValue && (
+          <p
+            key={`description-out-${descriptionTransition.transitionKey}`}
+            className={`${styles.descriptionBody} ${styles.descriptionOutgoing}`}
+            dangerouslySetInnerHTML={{ __html: sanitizeText(descriptionTransition.outgoingValue) }}
+          />
+        )}
+      </div>
+    </aside>
   );
 }
