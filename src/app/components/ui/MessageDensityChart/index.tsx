@@ -255,7 +255,11 @@ export default function MessageDensityChart() {
   }, []);
 
   const persistGraphHistoryState = useCallback(() => {
-    if (typeof window === "undefined" || window.location.pathname !== "/graph")
+    if (
+      typeof window === "undefined" ||
+      (window.location.pathname !== "/graph" &&
+        window.location.pathname !== "/wall/graph")
+    )
       return;
     const baseState =
       window.history.state && typeof window.history.state === "object"
