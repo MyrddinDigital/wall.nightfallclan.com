@@ -73,7 +73,7 @@
 }
 
 .logoSwap {
-  width: 30%;
+  width: 40%;
   height: 80px;
   position: relative;
   flex-shrink: 0;
@@ -82,9 +82,9 @@
 .logoLayer {
   position: absolute;
   inset: 0;
-  width: 80px;
+  width: 100%;
   height: 80px;
-  object-fit: cover;
+  object-fit: contain;
   will-change: transform, opacity, filter;
 }
 
